@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Briefcase, FileText, UsersRound, LogOut } from 'lucide-react';
+import { Home, Briefcase, FileText, UsersRound, LogOut, MoveDown } from 'lucide-react';
 import {UserContext} from '../state_management/UserContext.tsx';
 import { useContext, useState } from 'react';
 
@@ -19,6 +19,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   ];
   const { userDetails, token } = useContext(UserContext);
   let [user, setUser] = useState(userDetails.name);
+  let [profileDropDown, setProfileDropDown] = useState(false);
   useEffect(() => {
     setUser(userDetails.name);
   },[userDetails]);
@@ -62,10 +63,25 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
               <UsersRound className='' />
               {user && <p >{user} </p>}
             </div> */}
+            <div className="relative flex flex-col items-center ml-32 p-4">
+  {/* clickable area */}
+  <div onClick={() => setProfileDropDown(!profileDropDown)} className="cursor-pointer flex flex-col justify-center items-center">
+    <UsersRound />
+    {user && <p>{user}</p>}
+  </div>
+
+  {/* dropdown */}
+  {profileDropDown && (
+    <div className="absolute top-full  mt-2 bg-neutral-300 p-5 rounded shadow">
+      <p className='w-fit text-nowrap'>User E-Mail -{userDetails.email} </p>
+      {/* <p>Subscribed Plan -{userDetails.plan}</p> */}
+    </div>
+  )}
+</div>
             <button onClick={() =>
   user
     ? (() => { localStorage.clear();setUser(''); navigate('/login'); })()
-    : (()=>{onTabChange('login'); navigate('/login');})()}
+    : (()=>{navigate('/login');})()}
 >
               {user && <LogOut className='' />}
                <p className='font-medium'>{user?'Logout':''} </p>

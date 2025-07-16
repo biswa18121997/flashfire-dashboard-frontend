@@ -17,7 +17,7 @@ export default function Register(){
        
         try {
             console.log(name,mail,password)
-            const res = await fetch('https://dashboardbackend-ijnw.onrender.com/register', {
+            const res = await fetch('http://localhost:8086/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({name, email: mail , password })
