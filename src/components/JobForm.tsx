@@ -119,8 +119,8 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
 const uploadImagesToCloudinary = async (): Promise<string[]> => {
   const urls: string[] = [];
 
-  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;              // 🔷 Replace with your cloud name
-  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_CLOUD_PRESET;    // 🔷 Replace with your upload preset
+  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;             
+  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_CLOUD_PRESET;    
 
   try {
     for (const file of images) {
