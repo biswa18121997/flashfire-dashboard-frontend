@@ -47,10 +47,24 @@ const Dashboard: React.FC = () => {
       console.log(error);
     }
   }
-  useEffect(() => {
-    FetchAllJobs();
+  // useEffect(() => {
+  //   FetchAllJobs();
     
-  },[])
+  // },[])
+  useEffect(() => {
+  const localToken = context?.token || localStorage.getItem('token');
+  const localUserDetails = context?.userDetails || JSON.parse(localStorage.getItem('userDetails') || '{}');
+
+  if (!localToken || !localUserDetails || !localUserDetails.email) {
+    localStorage.clear();
+    navigate('/login');
+    return;
+  }
+
+  // update token/userDetails state
+  FetchAllJobs(localToken, localUserDetails);
+}, []);
+
   const stats = calculateDashboardStats(jobs);
   
   const recentJobs = jobs
