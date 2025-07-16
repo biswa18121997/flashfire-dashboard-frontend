@@ -9,6 +9,9 @@ interface DashboardProps {
   jobs: Job[];
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = React.useState([]);
   const context = useContext(UserContext);
@@ -18,11 +21,16 @@ const Dashboard: React.FC = () => {
 
   async function FetchAllJobs() {
     try {
-      let reqToServer = await fetch(`http://localhost:8086/api/alljobs`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({token,userDetails}),
-    });
+    //   let reqToServer = await fetch(`http://localhost:8086/api/alljobs`, {
+    //   method: 'POST',
+    //   headers: {'Content-Type': 'application/json'},
+    //   body: JSON.stringify({token,userDetails}),
+    // });
+      let reqToServer = await fetch(`${API_BASE_URL}/api/alljobs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, userDetails }),
+  });
     let responseFromServer = await reqToServer.json();
     if (responseFromServer.message === 'all Jobs List') {
       setJobs(responseFromServer?.allJobs);
