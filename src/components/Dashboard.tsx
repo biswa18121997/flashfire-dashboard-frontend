@@ -19,34 +19,56 @@ const Dashboard: React.FC = () => {
   const token = context?.token || null;
   const navigate = useNavigate();
 
-  async function FetchAllJobs() {
-    try {
-    //   let reqToServer = await fetch(`http://localhost:8086/api/alljobs`, {
-    //   method: 'POST',
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: JSON.stringify({token,userDetails}),
-    // });
-      let reqToServer = await fetch(`${API_BASE_URL}/api/alljobs`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, userDetails }),
-  });
-    let responseFromServer = await reqToServer.json();
-    if (responseFromServer.message === 'all Jobs List') {
-      setJobs(responseFromServer?.allJobs);
-      let interviewing = jobs?.filter((items)=>items?.currentStatus == 'interviewing').length
-      console.log('User jobs:', responseFromServer?.allJobs);
-    }else if(responseFromServer.message == 'invalid token please login again'){
+  // async function FetchAllJobs() {
+  //   try {
+  //   //   let reqToServer = await fetch(`http://localhost:8086/api/alljobs`, {
+  //   //   method: 'POST',
+  //   //   headers: {'Content-Type': 'application/json'},
+  //   //   body: JSON.stringify({token,userDetails}),
+  //   // });
+  //     let reqToServer = await fetch(`${API_BASE_URL}/api/alljobs`, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify({ token, userDetails }),
+  // });
+  //   let responseFromServer = await reqToServer.json();
+  //   if (responseFromServer.message === 'all Jobs List') {
+  //     setJobs(responseFromServer?.allJobs);
+  //     let interviewing = jobs?.filter((items)=>items?.currentStatus == 'interviewing').length
+  //     console.log('User jobs:', responseFromServer?.allJobs);
+  //   }else if(responseFromServer.message == 'invalid token please login again'){
+  //     localStorage.clear();
+  //     navigate('/login');
+  //   }
+  //   else {
+  //     console.error('Error fetching jobs:', responseFromServer.message);
+  //   }     
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+  async function FetchAllJobs(localToken, localUserDetails) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/alljobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: localToken, userDetails: localUserDetails }),
+    });
+
+    const data = await res.json();
+    if (data.message === 'all Jobs List') {
+      setJobs(data.allJobs);
+    } else if (data.message === 'invalid token please login again') {
       localStorage.clear();
       navigate('/login');
+    } else {
+      console.error('Error fetching jobs:', data.message);
     }
-    else {
-      console.error('Error fetching jobs:', responseFromServer.message);
-    }     
-    } catch (error) {
-      console.log(error);
-    }
+  } catch (err) {
+    console.error(err);
   }
+}
+
   // useEffect(() => {
   //   FetchAllJobs();
     
