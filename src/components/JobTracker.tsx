@@ -231,6 +231,8 @@ const JobTracker = () => {
   const {userDetails, token, setData} = useContext(UserContext);
   // const userDetails = context?.userDetails || {};
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   const statusColumns: { status: JobStatus; label: string; color: string }[] = [
     { status: 'saved', label: 'Saved', color: 'bg-gray-50 border-gray-200' },
@@ -245,13 +247,22 @@ useEffect(() => {
   setData({token, userDetails});
   (async () => {
     try {
-      const requestToServer = await fetch(`http://localhost:8086/api/alljobs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({token, userDetails }),
-      });
+      // const requestToServer = await fetch(`http://localhost:8086/api/alljobs`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({token, userDetails }),
+      // });
+      const requestToServer = await fetch(`${API_BASE_URL}/api/alljobs`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ token, userDetails }),
+});
+
+      
       const responseFromServer = await requestToServer.json();
       if (responseFromServer.message === 'all Jobs List') {
         setUserJobs(responseFromServer?.allJobs);
@@ -283,17 +294,31 @@ useEffect(() => {
       userID: userDetails?.email,
     };
 
-    const response = await fetch(`http://localhost:8086/api/jobs`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token,
-        jobID: editingJob.jobID,
-        userDetails,
-        jobDetails: updatedJobDetails,
-        action: 'update',
-      }),
-    });
+    // const response = await fetch(`http://localhost:8086/api/jobs`, {
+    //   method: 'PUT',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     token,
+    //     jobID: editingJob.jobID,
+    //     userDetails,
+    //     jobDetails: updatedJobDetails,
+    //     action: 'update',
+    //   }),
+    // });
+    const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    token,
+    jobID: editingJob.jobID,
+    userDetails,
+    jobDetails: updatedJobDetails,
+    action: 'update',
+  }),
+});
+
 
     const result = await response.json();
 
@@ -323,11 +348,19 @@ useEffect(() => {
         currentStatus: formData.status,
         userID: userDetails.email, // Include user details
       };
-      const saveJobsToDb = await fetch(`http://localhost:8086/api/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({jobDetails,userDetails, token}),
-      });
+      // const saveJobsToDb = await fetch(`http://localhost:8086/api/jobs`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({jobDetails,userDetails, token}),
+      // });
+      const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ jobDetails, userDetails, token }),
+});
+
       const responseFromServer = await saveJobsToDb.json();
       console.log(responseFromServer);
       setUserJobs(responseFromServer.NewJobList);
@@ -359,13 +392,21 @@ useEffect(() => {
 
   const onDeleteJob = async (jobID: string) => {
   try {
-    const response = await fetch(`http://localhost:8086/api/jobs`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ jobID, userDetails,token, action: 'delete' }),
-    });
+    // const response = await fetch(`http://localhost:8086/api/jobs`, {
+    //   method: 'PUT',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ jobID, userDetails,token, action: 'delete' }),
+    // });
+    const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ jobID, userDetails, token, action: 'delete' }),
+});
+
     const result = await response.json();
     if (result.message === 'Jobs updated successfully') {
       setUserJobs(result?.updatedJobs);
@@ -377,13 +418,21 @@ useEffect(() => {
 };
   const onUpdateJobStatus = async (jobID, status, userDetails)=> {
       try {
-        let reqToServer = await fetch(`http://localhost:8086/api/jobs`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({action: 'UpdateStatus', status, userDetails,token, jobID }),
-        });
+        // let reqToServer = await fetch(`http://localhost:8086/api/jobs`, {
+        //   method: 'PUT',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({action: 'UpdateStatus', status, userDetails,token, jobID }),
+        // });
+        let reqToServer = await fetch(`${API_BASE_URL}/api/jobs`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ action: 'UpdateStatus', status, userDetails, token, jobID }),
+});
+
         let resFromServer = await reqToServer.json();
         if (resFromServer.message === 'Jobs updated successfully') {
           setUserJobs(resFromServer?.updatedJobs);
