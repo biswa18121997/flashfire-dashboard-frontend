@@ -13,41 +13,32 @@ export default function Register(){
     let redirect = useNavigate();
 
 //taking inpout and sending it to server..
-    async function handleRegister(){
-       
-        // try {
-        //     console.log(name,mail,password)
-        //     const res = await fetch('http://localhost:8086/register', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({name, email: mail , password })
-                
-        //     });
-        try {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  console.log(name, mail, password);
+    async function handleRegister() {
+  try {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    console.log(name, mail, password);
 
-  const res = await fetch(`${API_BASE_URL}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email: mail, password }),
-  });
-           
-            //setting response ..
-            setResponse(await res.json());
-            if(setResponse?.message === 'User registered'){
-                //redirect to login page..
-                redirect('/login');
-                // alert('User Registered Sucessfully , Please Login Now..!')
-            }
-             setName('');
-            setMail('')
-            setPassword('')
+    const res = await fetch(`${API_BASE_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email: mail, password }),
+    });
 
-        } catch (error) {
-            console.log(error)
-        }
+    const data = await res.json();
+    setResponse(data);
+
+    if (data?.message === 'User registered') {
+      redirect('/login');
     }
+
+    setName('');
+    setMail('');
+    setPassword('');
+  } catch (error) {
+    console.log("Registration failed:", error);
+  }
+}
+
 
     return(<div className="w-[80vw] relative left-[20vw] h-screen top-[20vh] sm:top-[15vh] md:top-[15vh]">
                 <span onClick={()=>redirect('/')}><X  className="hover:bg-neutral-400 rounded-full m-2"/></span>
