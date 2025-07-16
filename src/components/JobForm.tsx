@@ -183,11 +183,19 @@ const uploadImagesToCloudinary = async (): Promise<string[]> => {
         attachments: uploadedUrls,
       };
       console.log(jobDetails);
-      const saveJobsToDb = await fetch(`http://localhost:8086/api/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDetails, userDetails, token }),
-      });
+      // const saveJobsToDb = await fetch(`http://localhost:8086/api/jobs`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ jobDetails, userDetails, token }),
+      // });
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ jobDetails, userDetails, token }),
+});
+
 
       const responseFromServer = await saveJobsToDb.json();
 
