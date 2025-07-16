@@ -497,11 +497,13 @@ const statsData = [
 
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8086/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const res = await fetch(`${API_BASE_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
       const data: LoginResponse = await res.json();
       setResponse(data);
