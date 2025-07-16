@@ -15,14 +15,23 @@ export default function Register(){
 //taking inpout and sending it to server..
     async function handleRegister(){
        
-        try {
-            console.log(name,mail,password)
-            const res = await fetch('http://localhost:8086/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({name, email: mail , password })
+        // try {
+        //     console.log(name,mail,password)
+        //     const res = await fetch('http://localhost:8086/register', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({name, email: mail , password })
                 
-            });
+        //     });
+        try {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  console.log(name, mail, password);
+
+  const res = await fetch(`${API_BASE_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email: mail, password }),
+  });
            
             //setting response ..
             setResponse(await res.json());
