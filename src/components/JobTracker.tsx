@@ -240,7 +240,7 @@ const JobTracker = () => {
     { status: 'interviewing', label: 'Interviewing', color: 'bg-amber-50 border-amber-200' },
     { status: 'offer', label: 'Offers', color: 'bg-green-50 border-green-200' },
     { status: 'rejected', label: 'Rejected', color: 'bg-red-50 border-red-200' },
-    { status: 'deleted', label: 'deleted', color: 'bg-red-500/50 border-red-100' }
+    { status: 'deleted', label: 'Removed', color: 'bg-red-500/50 border-red-100' }
   ];
 
 useEffect(() => {
