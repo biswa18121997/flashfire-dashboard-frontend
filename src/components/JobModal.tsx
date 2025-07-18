@@ -64,6 +64,11 @@ export default function JobModal({setShowJobModal,showJobModal, jobDetails, }){
           </div>
         </div>
       </div>
+        <h3 className="font-semibold text-gray-800 mb-2">Job Details</h3>
+         <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
+        
+      {jobDetails.jobDescription}
+      </div>
         <h3 className="font-semibold text-gray-800 mb-2">Resume / Attachments</h3>
 
     <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
