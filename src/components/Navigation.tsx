@@ -72,8 +72,9 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
 
   {/* dropdown */}
   {profileDropDown && (
-    <div className="absolute top-full  mt-2 bg-neutral-300 p-5 rounded shadow">
+    <div className="absolute top-full  mt-2 bg-neutral-300 p-5 rounded shadow flex flex-col items-end ">
       <p className='w-fit text-nowrap'>User E-Mail -{userDetails.email} </p>
+      <p className='text-right border-2 p-2 m-1 rounded-2xl w-fit border-yellow-500'>{userDetails.planType}</p>
       {/* <p>Subscribed Plan -{userDetails.plan}</p> */}
     </div>
   )}

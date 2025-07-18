@@ -1,11 +1,8 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { X, Calendar, Building, FileText, Briefcase, Link, Copy } from "lucide-react";
 import { Job, JobStatus } from "../types";
 import { UserContext } from "../state_management/UserContext";
 import { useNavigate } from "react-router-dom";
-// import { supabase } from "../utils/SupabaseClient.ts";
-
 interface JobFormProps {
   job?: Job | null;
   onCancel: () => void;
@@ -28,7 +25,7 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
   const [error, setError] = useState<string | null>(null);
   const { userDetails, token } = useContext(UserContext);
   const navigate = useNavigate();
-
+  const [isEditMode, setIsEditMode] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
@@ -44,7 +41,9 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
         dateApplied: job.dateApplied?.split("T")[0] || new Date().toISOString().split("T")[0],
         status: job.currentStatus,
       });
-    }
+      setIsEditMode(true);
+    };
+    
   }, [job]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -75,46 +74,6 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
       ]);
     }
   };
-
- 
-
-//   const uploadImagesToSupabase = async (): Promise<string[]> => {
-//   const urls: string[] = [];
-//   try {
-//     for (const file of images) {
-//       const filePath = `${Date.now()}-${file.name}`;
-//       const { data: uploadData, error: uploadError } =
-//         await supabase.storage
-//           .from("flashfireimagestore")
-//           .upload(filePath, file);
-
-//       if (uploadError) {
-//         console.error("Upload error:", uploadError);
-//         continue;
-//       }
-
-//       const { data: urlData, error: urlError } =
-//         supabase.storage
-//           .from("flashfireimagestore")
-//           .getPublicUrl(filePath);
-
-//       if (urlError) {
-//         console.error("getPublicUrl error:", urlError);
-//         continue;
-//       }
-
-//       if (urlData?.publicUrl) {
-//         urls.push(urlData.publicUrl);
-//         console.log("Public URL:", urlData.publicUrl);
-//       } else {
-//         console.error("No publicUrl returned for", filePath);
-//       }
-//     }
-//   } catch (err) {
-//     console.error("Unexpected error uploading images:", err);
-//   }
-//   return urls;
-// };
 
 const uploadImagesToCloudinary = async (): Promise<string[]> => {
   const urls: string[] = [];
@@ -183,14 +142,9 @@ const uploadImagesToCloudinary = async (): Promise<string[]> => {
         attachments: uploadedUrls,
       };
       console.log(jobDetails);
-      // const saveJobsToDb = await fetch(`http://localhost:8086/api/jobs`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ jobDetails, userDetails, token }),
-      // });
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
+const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, { //${API_BASE_URL}
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ jobDetails, userDetails, token }),
@@ -239,6 +193,8 @@ const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
           <div>
             <label className="block text-sm font-medium">Job Title *</label>
             <input
+              disabled={isEditMode}
+              readOnly={isEditMode}
               name="jobTitle"
               value={formData.jobTitle}
               onChange={handleChange}
@@ -249,6 +205,8 @@ const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
           <div>
             <label className="block text-sm font-medium">Company Name *</label>
             <input
+              disabled={isEditMode}
+              readOnly={isEditMode}
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
@@ -261,6 +219,8 @@ const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
         <div>
           <label className="block text-sm font-medium">Job Description</label>
           <textarea
+            disabled={isEditMode}
+            readOnly={isEditMode}
             name="jobDescription"
             value={formData.jobDescription}
             onChange={handleChange}
@@ -292,6 +252,8 @@ const saveJobsToDb = await fetch(`${API_BASE_URL}/api/jobs`, {
         <div>
           <label className="block text-sm font-medium">Job Link</label>
           <input
+            disabled={isEditMode}
+            readOnly={isEditMode}
             name="joblink"
             value={formData.joblink}
             onChange={handleChange}

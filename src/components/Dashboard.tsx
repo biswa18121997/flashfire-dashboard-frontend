@@ -1,93 +1,60 @@
-import React, { useEffect, useContext } from 'react';
+
 import { Briefcase, FileText, TrendingUp, Users, Target, CheckCircle, XCircle, Clock, Award } from 'lucide-react';
-import { Job } from '../types';
-import { calculateDashboardStats } from '../utils/storage';
-import { UserContext } from '../state_management/UserContext.js';
+import React, { useEffect, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface DashboardProps {
-  jobs: Job[];
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+import { useUserJobs } from '../state_management/UserJobs.tsx';
+import { UserContext } from '../state_management/UserContext.js';
+import LoadingScreen from './LoadingScreen.tsx';
+import { calculateDashboardStats } from '../utils/storage.ts';
 
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = React.useState([]);
   const context = useContext(UserContext);
-  const userDetails = context?.userDetails || {};
-  const token = context?.token || null;
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // async function FetchAllJobs() {
-  //   try {
-  //   //   let reqToServer = await fetch(`http://localhost:8086/api/alljobs`, {
-  //   //   method: 'POST',
-  //   //   headers: {'Content-Type': 'application/json'},
-  //   //   body: JSON.stringify({token,userDetails}),
-  //   // });
-  //     let reqToServer = await fetch(`${API_BASE_URL}/api/alljobs`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ token, userDetails }),
-  // });
-  //   let responseFromServer = await reqToServer.json();
-  //   if (responseFromServer.message === 'all Jobs List') {
-  //     setJobs(responseFromServer?.allJobs);
-  //     let interviewing = jobs?.filter((items)=>items?.currentStatus == 'interviewing').length
-  //     console.log('User jobs:', responseFromServer?.allJobs);
-  //   }else if(responseFromServer.message == 'invalid token please login again'){
-  //     localStorage.clear();
-  //     navigate('/login');
-  //   }
-  //   else {
-  //     console.error('Error fetching jobs:', responseFromServer.message);
-  //   }     
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  const { userJobs, setUserJobs, loading } = useUserJobs(); 
+
+  const [loadingDetails, setLoadingDetails] = useState(false);
   async function FetchAllJobs(localToken, localUserDetails) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/alljobs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: localToken, userDetails: localUserDetails }),
-    });
+    try {
+      setLoadingDetails(true);
+      const res = await fetch(`${API_BASE_URL}/api/alljobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: localToken, userDetails: localUserDetails }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUserJobs(data.allJobs);
+        setJobs(data.allJobs);
+      } else if (data.message === 'invalid token please login again') {
+        localStorage.clear();
+        navigate('/login');
+      } else {
+        console.error('Error fetching jobs:', data.message);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingDetails(false);
+    }
+  }
 
-    const data = await res.json();
-    if (data.message === 'all Jobs List') {
-      setJobs(data.allJobs);
-    } else if (data.message === 'invalid token please login again') {
+  useEffect(() => {
+    const localToken = context?.token || localStorage.getItem('token');
+    const localUserDetails =
+      context?.userDetails || JSON.parse(localStorage.getItem('userDetails') || '{}');
+
+    if (!localToken || !localUserDetails || !localUserDetails.email) {
       localStorage.clear();
       navigate('/login');
-    } else {
-      console.error('Error fetching jobs:', data.message);
+      return;
     }
-  } catch (err) {
-    console.error(err);
-  }
-}
 
-  // useEffect(() => {
-  //   FetchAllJobs();
-    
-  // },[])
-  useEffect(() => {
-  const localToken = context?.token || localStorage.getItem('token');
-  const localUserDetails = context?.userDetails || JSON.parse(localStorage.getItem('userDetails') || '{}');
-
-  if (!localToken || !localUserDetails || !localUserDetails.email) {
-    localStorage.clear();
-    navigate('/login');
-    return;
-  }
-
-  // update token/userDetails state
-  FetchAllJobs(localToken, localUserDetails);
-}, []);
-
-  const stats = calculateDashboardStats(jobs);
+    FetchAllJobs(localToken, localUserDetails);
+  }, []);
+    const stats = calculateDashboardStats(jobs);
   
   const recentJobs = jobs
     .sort((a, b) => new Date(b?.updatedAt).getTime() - new Date(a?.updatedAt).getTime())
@@ -96,6 +63,11 @@ const Dashboard: React.FC = () => {
   const successRate = stats.total > 0 ? Math.round((stats.offer / stats.total) * 100) : 0;
   const responseRate = stats.total > 0 ? Math.round(((stats.interviewing + stats.offer) / stats.total) * 100) : 0;
 
+
+  
+  if (loadingDetails) {
+    return <LoadingScreen />;
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -252,9 +224,9 @@ const Dashboard: React.FC = () => {
 
   {recentJobs.length > 0 ? (
     <div className="space-y-4">
-      {recentJobs.map((job) => {
+      {recentJobs?.map((job) => {
         // Determine status key from the same field you use elsewhere
-        const key = (job.currentStatus || 'saved').toLowerCase();
+        const key = (job.updatedAt || 'saved').toLowerCase();
 
         // Configuration for each status
         const statusConfig: Record<string, {
@@ -330,10 +302,10 @@ const Dashboard: React.FC = () => {
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize border ${config.color}`}
               >
-                {config.label}
+                {job.currentStatus}
               </span>
               <p className="text-xs text-gray-500 mt-1">
-                {displayDate}
+                {job.updatedAt}
               </p>
             </div>
           </div>

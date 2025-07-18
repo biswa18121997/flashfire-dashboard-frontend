@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {Link, useNavigate} from 'react-router-dom'
-import { X } from "lucide-react";
+import { Badge, Coins, CoinsIcon, Diamond, X } from "lucide-react";
 
 //register page component..
 export default function Register(){
@@ -9,8 +9,48 @@ export default function Register(){
     const [name, setName] = useState('');
     const [mail,setMail] = useState('');
     const [password, setPassword] = useState('');
+    const [planType, setPlanType] = useState('TESTING PLAN');
     let [response, setResponse] = useState();
     let redirect = useNavigate();
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const plans = [
+      {
+        planName : `TESTING PLAN`,
+        planDurationInDays : 'Unlimited',
+        planPerks : 'Nothing',
+        icon : <Diamond />,
+        style : 'text-black'
+      },
+      {
+        planName : 'Free Trial',
+        planDurationInDays : 10,
+        planPerks : '10 Days Unlimited trials fro selected individuls',
+        icon : <Badge />,
+        style : 'text-blue-600'
+      },
+      {
+        planName : 'Ignite',
+        planDurationInDays : 'Unlimited Days Upto 250 applications',
+        planPerks : '250 applications',
+        icon : <CoinsIcon  />,
+        style : 'text-gray-800'
+      },
+      {
+        planName : 'Professional',
+        planDurationInDays : 'Unlimited Days Upto 500 applications',
+        planPerks : '500 applications',
+        icon : <Coins />,
+        style : 'text-yellow-500'
+      },
+      {
+        planName : 'Executive',
+        planDurationInDays : 'Unlimited Days Upto 1000 applications',
+        planPerks : '1000 applications',
+        icon : <CoinsIcon />,
+        style : 'text-red-800'
+      }
+    ]
 
 //taking inpout and sending it to server..
     async function handleRegister() {
@@ -19,10 +59,10 @@ export default function Register(){
     console.log("API_BASE_URL:", API_BASE_URL);
     console.log(name, mail, password);
 
-    const res = await fetch(`${API_BASE_URL}/register`, {
+    const res = await fetch(`${API_BASE_URL}/register`, {  //${API_BASE_URL}
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email: mail, password }),
+      body: JSON.stringify({ name, email: mail, password, planType }),
     });
 
     const data = await res.json();
@@ -59,6 +99,15 @@ export default function Register(){
                     <input type={show?'text':'password'} name="password" id="loginpassword" onChange={(e)=>setPassword(e.target.value)} placeholder="Enter your password " className="p-2 bg-neutral-400 w-full rounded-3xl m-2"/>
                     <i onClick={()=>setShow(!show)} className={show?'fa-solid fa-eye':'fa-solid fa-eye-low-vision' }></i>
                 </section>
+                <label htmlFor="dropdown" >Select Your Plan :</label>
+                <select
+                    required
+                    value={planType}
+                    onChange={(e) => setPlanType(e.target.value)}
+                    className="border rounded-3xl bg-neutral-300 p-2"
+                  >
+                    {plans.map((items)=><option key={items.planName} value={items.planName}>{items.planName}</option>)}
+                  </select>
                     <p className="text-blue-700 underline underline-offset-8 m-1">Forgot your Password .? </p>         
                     <button onClick={handleRegister} className="p-2 m-2 rounded-2xl border w-full">Register</button> 
                     <Link to={'/login'} className="w-full">
