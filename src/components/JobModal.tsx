@@ -1,6 +1,7 @@
 
 import { X, Building, Briefcase, Calendar, User, FileText, ArrowRight } from "lucide-react";
 import { useState, Suspense, lazy } from "react";
+import LoadingScreen from "./LoadingScreen";
 const AttachmentsModal = lazy(() => import("./AttachmentsModal"));
 export default function JobModal({ setShowJobModal, jobDetails }) {
   const [attachmentsModalActiveStatus, setAttachmentsModalActiveStatus] = useState(false);
