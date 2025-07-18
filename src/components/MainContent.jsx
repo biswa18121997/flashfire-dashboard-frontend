@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import Navigation from './Navigation';
-import Dashboard from './Dashboard';
-import JobTracker from './JobTracker';
-import ResumeOptimizer from './ResumeOptimizer';
+// import Navigation from './Navigation';
+const Navigation = lazy(()=>import('./Navigation'))
+// import Dashboard from './Dashboard';
+const Dashboard = lazy(()=>import('./Dashboard'))
+// import JobTracker from './JobTracker';
+const JobTracker = lazy(()=>import('./JobTracker'))
+// import ResumeOptimizer from './ResumeOptimizer';
+const ResumeOptimizer = lazy(()=>import('./ResumeOptimizer'))
 import { UserContext } from '../state_management/UserContext';
+import LoadingScreen from './LoadingScreen';
 // import {BaseResume} from '../types/index'
 
 
@@ -24,14 +29,16 @@ if(!token || token.length==0 ){
 
   return (
     <div className="min-h-screen bg-gray-50">
-        
+       <Suspense fallback={<LoadingScreen />}>
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+        </Suspense> 
         <main>
           
-          {activeTab === 'dashboard' && <Dashboard />}
+          {activeTab === 'dashboard' && <Suspense fallback={<LoadingScreen />}><Dashboard /></Suspense>}
           
           
           {activeTab === 'jobs' && (
+          <Suspense fallback={<LoadingScreen />}>  
             <JobTracker
               // jobs={jobs}
               // baseResume={baseResume}
@@ -43,13 +50,16 @@ if(!token || token.length==0 ){
               // onAddOptimizedResume={addOptimizedResume}
               // onShowPDFUploader={() => setShowPDFUploader(true)}
             />
+          </Suspense>
           )}
 
           {activeTab === 'optimizer' && (
+            <Suspense fallback={<LoadingScreen />}>
             <ResumeOptimizer
               baseResume={baseResume}
               onShowPDFUploader={() => setShowPDFUploader(true)}
             />
+            </Suspense>
           )}
         </main>
 
