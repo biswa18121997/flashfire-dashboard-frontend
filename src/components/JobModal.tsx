@@ -420,11 +420,36 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-      <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-xl shadow-xl flex overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-80 bg-gray-50 border-r border-gray-200 pt-20 pb-6">
-          <div className="px-4">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Navigation</h3>
+      <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-xl shadow-xl flex flex-col overflow-hidden">
+
+        {/* 🔶 Full-width header bar (no left gap) */}
+        <div className="w-full bg-gradient-to-r from-orange-600 to-red-500 text-white p-4 z-10">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <FileText className="w-6 h-6 mr-3" />
+              <div>
+                <h1 className="text-xl font-bold">📄 FlashFire Jobs</h1>
+                <p className="text-orange-100 text-sm">
+                  {jobDetails.jobTitle} at {jobDetails.companyName}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowJobModal(false)}
+              className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* 🔹 Body: Sidebar + Content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar (Thinner) */}
+          <div className="w-56 bg-gray-50 border-r border-gray-200 py-6 px-3">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-1">
+              Navigation
+            </h3>
             <nav className="space-y-2">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -433,13 +458,13 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 ${
+                    className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-all duration-200 text-sm ${
                       isActive
                         ? `${section.color} border shadow-sm`
                         : "text-gray-700 hover:bg-white hover:shadow-sm border border-transparent"
                     }`}
                   >
-                    <Icon className={`w-5 h-5 mr-3 ${isActive ? "" : "text-gray-500"}`} />
+                    <Icon className={`w-5 h-5 mr-2 ${isActive ? "" : "text-gray-500"}`} />
                     <span className="font-medium">{section.label}</span>
                     {isActive && <ArrowRight className="w-4 h-4 ml-auto" />}
                   </button>
@@ -447,36 +472,14 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
               })}
             </nav>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 relative pt-20 pb-6 overflow-y-auto">
-          {/* Header */}
-          <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-orange-600 to-red-500 text-white p-4 z-10 rounded-t-xl">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <FileText className="w-6 h-6 mr-3" />
-                <div>
-                  <h1 className="text-xl font-bold">📄 FlashFire Jobs</h1>
-                  <p className="text-orange-100 text-sm">
-                    {jobDetails.jobTitle} at {jobDetails.companyName}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowJobModal(false)}
-                className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+          {/* Main Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {renderContent()}
           </div>
-
-          {/* Body */}
-          <div className="p-6 mt-4">{renderContent()}</div>
         </div>
 
-        {/* Modal Viewer for Attachments */}
+        {/* Attachments Modal */}
         {attachmentsModalActiveStatus && (
           <Suspense fallback={<LoadingScreen />}>
             <AttachmentsModal
@@ -489,3 +492,4 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
     </div>
   );
 }
+
