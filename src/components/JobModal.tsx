@@ -275,37 +275,37 @@ const renderContent = () => {
 switch (activeSection) {
 case 'details':
 return (
-
-Company Name
-{jobDetails.companyName}
-
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center mb-2">
-              <Calendar className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Added On</span>
-            </div>
-            <p className="text-lg font-semibold text-gray-900">{jobDetails.createdAt}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center mb-2">
-              <Briefcase className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Position</span>
-            </div>
-            <p className="text-lg font-semibold text-gray-900">{jobDetails.jobTitle}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center mb-2">
-              <User className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-600">Candidate</span>
-            </div>
-            <p className="text-lg font-semibold text-gray-900">{jobDetails.userID}</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h4 className="text-sm font-medium text-gray-600 mb-2">Company Name</h4>
+        <p className="text-lg font-semibold text-gray-900">{jobDetails.companyName}</p>
       </div>
-    );
+
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center mb-2">
+          <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+          <span className="text-sm font-medium text-gray-600">Added On</span>
+        </div>
+        <p className="text-lg font-semibold text-gray-900">{jobDetails.createdAt}</p>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center mb-2">
+          <Briefcase className="w-4 h-4 text-gray-500 mr-2" />
+          <span className="text-sm font-medium text-gray-600">Position</span>
+        </div>
+        <p className="text-lg font-semibold text-gray-900">{jobDetails.jobTitle}</p>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center mb-2">
+          <User className="w-4 h-4 text-gray-500 mr-2" />
+          <span className="text-sm font-medium text-gray-600">Candidate</span>
+        </div>
+        <p className="text-lg font-semibold text-gray-900">{jobDetails.userID}</p>
+      </div>
+    </div>
+  );
 
   case 'link':
     return (
