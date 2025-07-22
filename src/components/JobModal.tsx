@@ -448,7 +448,7 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
           {/* Sidebar (Thinner) */}
           <div className="w-56 bg-gray-50 border-r border-gray-200 py-6 px-3">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-1">
-              Navigation
+
             </h3>
             <nav className="space-y-2">
               {sections.map((section) => {
