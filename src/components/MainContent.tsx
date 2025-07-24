@@ -20,10 +20,10 @@ export default function MainContent() {
   const {userDetails, token} = useContext(UserContext);
   const navigate = useNavigate();
   useEffect(()=>{
-if(!token || token.length==0 ){
+  if(!token || token.length==0  ){
     navigate('/login');
   }
-  })
+  },[])
   
   
 

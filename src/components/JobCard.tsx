@@ -29,14 +29,14 @@ const JobCard: React.FC<JobCardProps> = ({
       }}
       draggable
       onDragStart={(e) => onDragStart(e, job)}
-      className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-move"
+      className="bg-white rounded-lg border w-full border-gray-200 p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-move"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900 truncate">{job.jobTitle}</h4>
+          <h4 className="font-semibold text-gray-900 ">{job.jobTitle}</h4>
           <div className="flex items-center text-sm text-gray-600 mt-1">
             <Building className="w-3 h-3 mr-1" />
-            <span className="truncate">{job.companyName}</span>
+            <span className="">{job.companyName}</span> <hr />
           </div>
         </div>
       </div>

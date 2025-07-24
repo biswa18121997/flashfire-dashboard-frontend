@@ -180,13 +180,13 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
     }
   };
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-2 lg:px-1 py-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
+        <div className='flex flex-col justify-around items-start w-full ml-10'>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Job Tracker</h2>
-          <p className="text-gray-600">Track your job applications and manage your career pipeline</p>
+          <p className="text-gray-600 ">Track your job applications and manage your career pipeline</p>
         </div>
-        <div className="mt-4 sm:mt-0 flex items-center space-x-4">
+        <div className="mt-4 sm:mt-0 flex items-center justify-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -200,18 +200,15 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
 
           <button
             onClick={() => setShowJobForm(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Job</span>
-          </button>
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+          >+Add_Jobs</button>
         </div>
       </div>
 
       {/* Kanban Board */}
-      <div className="flex gap-6 justify-evenly ">
+      <div className="flex gap-2 justify-evenly w-full ">
   {/* Main Columns */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 flex-1">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1 m-4 w-full">
     {statusColumns.map(({ status, label, color }) => {
       const columnJobs = userJobs?.filter(
         (job) =>
@@ -223,7 +220,7 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
       return (
         <div
           key={status}
-          className={`rounded-lg border-2 border-dashed ${color} p-4 min-h-[600px]`}
+          className={`rounded-lg border-2 border-dashed ${color} p-1 min-h-[600px]`}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, status)}
         >
@@ -234,7 +231,7 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
             </span>
           </div>
 
-          <div className="space-y-3">
+          <div className=" space-y-2">
           <Suspense fallback={<LoadingScreen />}>
             {userJobs?.filter((items)=>items.currentStatus == status).map((job) => (         
               <JobCard 
