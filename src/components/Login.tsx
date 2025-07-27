@@ -167,7 +167,7 @@ const statsData = [
         
         <GoogleLogin
               onSuccess={async (credentialResponse) => {
-                const res = await fetch("http://localhost:8086/googleOAuth", {
+                const res = await fetch("https://flashfire-dashboard-backend-zg4u.onrender.com/googleOAuth", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ token: credentialResponse.credential })
