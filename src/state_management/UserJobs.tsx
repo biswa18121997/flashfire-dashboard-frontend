@@ -33,7 +33,7 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8086/api/alljobs`, {
+      const res = await fetch(`{VITE_API_BASE_URL}/api/alljobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, userDetails })

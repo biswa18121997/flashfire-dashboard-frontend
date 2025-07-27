@@ -4,7 +4,7 @@ const handleGoogleSuccess = async (credentialResponse) => {
   const { credential } = credentialResponse;
 
   try {
-    let res = await axios.post('http://localhost:8086/googleOAuth', {
+    let res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/googleOAuth`, {
       token: credential,
     });
     // save res.data.token + res.data.user
