@@ -181,11 +181,20 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
   };
   return (
     <div className="px-4 sm:px-2 lg:px-1 py-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+      <div className="flex flex-row sm:flex-row sm:items-center sm:justify-between mb-8">
         <div className='flex flex-col justify-around items-start w-full ml-10'>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Job Tracker</h2>
           <p className="text-gray-600 ">Track your job applications and manage your career pipeline</p>
         </div>
+        {userDetails.planType == 'Free Trial' && <div className="rounded-2xl p-2 m-4 border-4 absolute w-1/3 top-[10%] left-[35%] border-yellow-400 border-dashed bg-yellow-50 shadow-md">
+          <h1 className="text-lg font-semibold text-yellow-800 mb-2">
+            You’re on the <span className="underline">Free Plan</span>. Upgrade to a <span className="font-bold">Paid Plan</span> to automate your entire job search!
+          </h1>
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">Job Applications Remaining:</span>{" "}
+            {userJobs.filter((item) => item.currentStatus !== 'saved' && item.currentStatus !== 'deleted').length}
+          </p>
+        </div>}
         <div className="mt-4 sm:mt-0 flex items-center justify-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
