@@ -192,7 +192,7 @@ const { userJobs, setUserJobs, loading } = useUserJobs();
           </h1>
           <p className="text-sm text-gray-700">
             <span className="font-medium">Job Applications Remaining:</span>{" "}
-            {userJobs.filter((item) => item.currentStatus !== 'saved' && item.currentStatus !== 'deleted').length}
+            {userJobs.length - userJobs.filter((item) => item.currentStatus !== 'saved' && item.currentStatus !== 'deleted').length}
           </p>
         </div>}
         <div className="mt-4 sm:mt-0 flex items-center justify-center space-x-4">
