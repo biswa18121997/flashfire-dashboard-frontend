@@ -187,8 +187,8 @@ const statsData = [
   onError={() => console.log("Login Failed")}
   useOneTap
 /> */}
-<hr />
-<h1 className="text-center font-mono text-xl">OR</h1>
+{/* <hr />
+<h1 className="text-center font-mono text-xl">OR</h1> */}
         <form onSubmit={handleLogin} className="space-y-5">
           {/* Email */}
           <div>

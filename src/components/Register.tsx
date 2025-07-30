@@ -168,14 +168,14 @@ const Register = () => {
 
 
             {/* Divider - Reduced margin */}
-            <div className="relative mb-4">
+            {/* <div className="relative mb-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm mt-3">
                 <span className="px-3 bg-white text-gray-500 text-xs">Or continue with email</span>
               </div>
-            </div>
+            </div> */}
 
             {/* Registration Form - Reduced spacing */}
             <form onSubmit={handleSubmit} className="space-y-3">
