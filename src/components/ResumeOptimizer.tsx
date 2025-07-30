@@ -62,7 +62,7 @@ const ResumeOptimizer: React.FC = () => {
             resumeLink: newLink,
             token: parsed.token,
             userDetails: parsed.userDetails,
-            planType: parsed.userDetails.planType || 'Resume Upload Only',
+            planType: parsed.userDetails.planType || 'Free Trial',
             planLimit: parsed.userDetails.planLimit || 0
           })
         });
