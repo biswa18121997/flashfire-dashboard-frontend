@@ -3,7 +3,7 @@ import React, { useState, useContext, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle,TrendingUp, Users, Award, Clock, Cross, X } from "lucide-react";
 import { UserContext } from "../state_management/UserContext";
-import { GoogleLogin } from '@react-oauth/google';
+// import { GoogleLogin } from '@react-oauth/google';
 
 interface LoginResponse {
   message: string;
@@ -165,7 +165,7 @@ const statsData = [
           <p className="text-sm md:text-lg text-gray-600">Enter your credentials to login</p>
         </div>
         
-        <GoogleLogin
+        {/* <GoogleLogin
               onSuccess={async (credentialResponse) => {
                 const res = await fetch("https://flashfire-dashboard-backend-zg4u.onrender.com/googleOAuth", {
                   method: "POST",
@@ -185,7 +185,7 @@ const statsData = [
   }}
   onError={() => console.log("Login Failed")}
   useOneTap
-/>
+/> */}
 <hr />
 <h1 className="text-center font-mono text-xl">OR</h1>
         <form onSubmit={handleLogin} className="space-y-5">

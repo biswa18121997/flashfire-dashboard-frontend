@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Mail, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+// import { GoogleLogin } from '@react-oauth/google';
 import { UserContext } from "../state_management/UserContext";
 
 
@@ -95,10 +95,10 @@ const Register = () => {
 }
 
   // Handle Google sign-in
-  const handleGoogleSignIn = () => {
-    console.log('Google sign-in clicked');
-    // Implement Google OAuth here
-  };
+  // const handleGoogleSignIn = () => {
+  //   console.log('Google sign-in clicked');
+  //   // Implement Google OAuth here
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 overflow-hidden">
@@ -144,7 +144,7 @@ const Register = () => {
               </svg>
               <span className="text-sm">Continue with Google</span>
             </button> */}
-            <GoogleLogin
+            {/* <GoogleLogin
               onSuccess={async (credentialResponse) => {
                 const res = await fetch("https://flashfire-dashboard-backend-zg4u.onrender.com/googleOAuth", {
                   method: "POST",
@@ -164,7 +164,7 @@ const Register = () => {
   }}
   onError={() => console.log("Login Failed")}
   useOneTap
-/>
+/> */}
 
 
             {/* Divider - Reduced margin */}
