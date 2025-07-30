@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
             Track your job applications, monitor your progress, and optimize your career journey with AI-powered insights.
           </p>
         </div>
-        {userDetails.planType === 'Free Trial' && (
+        {/* {userDetails.planType === 'Free Trial' && (
   <div className="rounded-2xl p-2 m-4 border-2 absolute w-1/4 top-[10%] left-[70%] border-yellow-400 border-dashed bg-yellow-50 shadow-md">
     <h1 className="text-lg font-semibold text-yellow-800 mb-2">
       You’re on the <span className="underline">Free Plan</span>. Upgrade to a <span className="font-bold">Paid Plan</span> to automate your entire job search!
@@ -96,7 +96,7 @@ const Dashboard: React.FC = () => {
       }
     </p>
   </div>
-)}
+)} */}
 
         {/* Main Stats Grid */}
         <div data-aos='fade-right' className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
