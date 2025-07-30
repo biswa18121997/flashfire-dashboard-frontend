@@ -92,6 +92,7 @@ const statsData = [
 
       if (data?.message === "Login Sucess..!") {
         setData({ userDetails: data?.userDetails, token: data?.token });
+        localStorage.setItem("userAuth", JSON.stringify({ token: data?.token, userDetails: data?.userDetails }));
         navigate('/'); // Switch to dashboard tab
       } else {
         setData({});

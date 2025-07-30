@@ -9,13 +9,17 @@ import { calculateDashboardStats } from '../utils/storage.ts';
 // import NewUserModal from './NewUserModal.tsx'
 
 const Dashboard: React.FC = () => {
-  // const [newUserModal, setNewUserModal] = useState(false);
-  // const [jobs, setJobs] = useState([]);
-  // const {userDetails, token, setData} = useContext(UserContext);
+  const context = useContext(UserContext);
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const { token, userDetails, setData } = useContext(UserContext);
-  console.log(token)
+
+  if (!context) {
+    console.error("UserContext is null");
+    navigate('/login');
+    return null;
+  }
+
+  const { token, userDetails, setData } = context;
   const { userJobs, setUserJobs, loading } = useUserJobs(); 
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -30,21 +34,9 @@ const Dashboard: React.FC = () => {
       const data = await res.json();
       if (res.ok) {
         setUserJobs(data?.allJobs);
-        // setJobs(data.allJobs);
-        // setData({token, data.userDetails});
-
-        const storedAuth = localStorage.getItem('userAuth');
-        if (storedAuth) {
-          const parsedAuth = JSON.parse(storedAuth);
-          if (!parsedAuth?.userDetails?.planType) {
-            // setNewUserModal(true);
-          }
-        }
       } else if (data.message === 'invalid token please login again') {
         localStorage.clear();
         navigate('/login');
-      } else {
-        console.error('Error fetching jobs:', data.message);
       }
     } catch (err) {
       console.error(err);
@@ -54,10 +46,12 @@ const Dashboard: React.FC = () => {
   }
 
   useEffect(() => {
-
+    if (!token || !userDetails) {
+      navigate('/login');
+      return;
+    }
     FetchAllJobs(token, userDetails);
-    
-  }, []);
+  }, [token, userDetails]);
     const stats = calculateDashboardStats(userJobs);
   
   const recentJobs = userJobs

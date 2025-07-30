@@ -32,8 +32,9 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const fetchJobs = async () => {
     setLoading(true);
+    // const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
     try {
-      const res = await fetch(`{VITE_API_BASE_URL}/api/alljobs`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/alljobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, userDetails })
