@@ -168,8 +168,9 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Company Name</h4>
-              <p className="text-lg font-semibold text-gray-900">{jobDetails.companyName}</p>
+              <h4 className="text-sm font-medium text-gray-600 mb-6">Company Name</h4>
+              
+              <p className="text-lg flex gap-4 font-semibold text-gray-900"> <img src={`https://www.${jobDetails.companyName}.com/favicon.ico`} alt="Company Logo" className="w-[30px] h-[30px] " /> {jobDetails.companyName}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-center mb-2">
