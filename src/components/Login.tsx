@@ -3,6 +3,7 @@ import React, { useState, useContext, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle,TrendingUp, Users, Award, Clock, Cross, X } from "lucide-react";
 import { UserContext } from "../state_management/UserContext";
+// import { GoogleLogin } from '@react-oauth/google';
 
 interface LoginResponse {
   message: string;
@@ -90,7 +91,8 @@ const statsData = [
       setResponse(data);
 
       if (data?.message === "Login Sucess..!") {
-        setData({ userDetails: data.userDetails, token: data.token });
+        setData({ userDetails: data?.userDetails, token: data?.token });
+        localStorage.setItem("userAuth", JSON.stringify({ token: data?.token, userDetails: data?.userDetails }));
         navigate('/'); // Switch to dashboard tab
       } else {
         setData({});
@@ -163,7 +165,30 @@ const statsData = [
           <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Sign In</h3>
           <p className="text-sm md:text-lg text-gray-600">Enter your credentials to login</p>
         </div>
-
+        
+        {/* <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                const res = await fetch("https://flashfire-dashboard-backend-zg4u.onrender.com/googleOAuth", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ token: credentialResponse.credential })
+                });
+                const data = await res.json();
+                console.log(data)
+                if (data.token) {
+                  setData({ userDetails: data.userDetails, token: data.token });
+                  localStorage.setItem("userAuth",JSON.stringify({token : data?.token,userDetails : data?.userDetails}));
+                  
+                  navigate('/');
+                } else {
+                  setResponse({ message: data.message || 'Login failed' });
+                }
+  }}
+  onError={() => console.log("Login Failed")}
+  useOneTap
+/> */}
+{/* <hr />
+<h1 className="text-center font-mono text-xl">OR</h1> */}
         <form onSubmit={handleLogin} className="space-y-5">
           {/* Email */}
           <div>

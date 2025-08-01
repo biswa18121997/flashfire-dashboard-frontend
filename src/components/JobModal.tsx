@@ -1,238 +1,3 @@
-
-// import { X, Building, Briefcase, Calendar, User, FileText, ArrowRight } from "lucide-react";
-// import { useState, Suspense, lazy } from "react";
-// import LoadingScreen from "./LoadingScreen";
-// const AttachmentsModal = lazy(() => import("./AttachmentsModal"));
-// export default function JobModal({ setShowJobModal, jobDetails }) {
-//   const [attachmentsModalActiveStatus, setAttachmentsModalActiveStatus] = useState(false);
-//   const [selectedImage, setSelectedImage] = useState(null);
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-//       <div className="bg-white rounded-xl shadow-lg w-[80vw] max-w-3xl h-[80vh] overflow-y-auto relative">
-//         <section className="flex sticky top-0 justify-between items-center p-4 border-b bg-gradient-to-r from-orange-600 to-red-200 text-white rounded-t-xl">
-//           <h1 className="text-lg font-semibold">📄 FlashFire Jobs</h1>
-//           <button
-//             onClick={() => setShowJobModal(false)}
-//             className="hover:bg-purple-700 p-1 rounded-full"
-//           >
-//             <X className="w-5 h-5" />
-//           </button>
-//         </section>
-
-//         <div className="p-6 space-y-6">
-//           <div className="space-y-2">
-//             <FileText />
-//             <h2 className="text-xl font-semibold text-gray-800 inline"> Job Details</h2>
-//             <hr />
-//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
-//               <div>
-//                 <span className="font-medium"><Building className="w-4 h-4 inline mr-1" /> Company Name:</span> <br /> {jobDetails.companyName}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><Calendar className="w-4 h-4 inline mr-1"/> Added On:</span> <br /> {jobDetails.createdAt}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><Briefcase className="w-4 h-4 inline mr-1" /> Position:</span> <br /> {jobDetails.jobTitle}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><User className="w-4 h-4 inline mr-1"/> Candidate:</span> <br /> {jobDetails.userID}
-//               </div>
-//             </div>
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Job Link</h3>
-//           <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
-//             <h1>{jobDetails.joblink}</h1>
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Job Description</h3>
-//           <div className="bg-gray-50 p-4 rounded-lg shadow-inner w-full">
-//             {jobDetails?.jobDescription ? (
-//               <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
-//                 {jobDetails.jobDescription}
-//               </div>
-//             ) : (
-//               <p className="text-gray-500 italic text-sm">No job description available.</p>
-//             )}
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Resume / Attachments</h3>
-//           <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
-//             {jobDetails?.attachments?.length ? (
-//               jobDetails.attachments.map((item) => (
-//                 <img
-//                   onClick={() => {
-//                     setSelectedImage(item);
-//                     setAttachmentsModalActiveStatus(true);
-//                   }}
-//                   src={item}
-//                   alt="resume"
-//                   key={item}
-//                   className="w-[20vw] h-[30vh] cursor-pointer object-cover"
-//                 />
-//               ))
-//             ) : (
-//               <h2 className="text-gray-500 italic">No resume uploaded yet.</h2>
-//             )}
-//           </div>
-
-//           <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-//             <h3 className="font-semibold text-gray-800 mb-2">📈 Timeline</h3>
-//             <div className="space-y-2 flex overflow-x-scroll">
-//               {jobDetails?.timeline?.length > 0 ? (
-//                 jobDetails.timeline.map((item, idx) => (
-//                   <div
-//                     key={idx}
-//                     className="flex items-center justify-center space-x-2 text-sm text-gray-600"
-//                   >
-//                     <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-//                     <span>{item}</span>
-//                     <ArrowRight />
-//                   </div>
-//                 ))
-//               ) : (
-//                 <div className="text-gray-500 italic">No timeline available.</div>
-//               )}
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {attachmentsModalActiveStatus && (
-//       <Suspense fallback={<LoadingScreen />}>
-//         <AttachmentsModal
-//           imageLink={selectedImage}
-//           setAttachmentsModalActiveStatus={setAttachmentsModalActiveStatus}
-//         />
-//       </Suspense>
-//       )}
-//     </div>
-//   );
-// }
-
-
-// import { X, Building, Briefcase, Calendar, User, FileText, ArrowRight } from "lucide-react";
-// import { useState, Suspense, lazy } from "react";
-// import LoadingScreen from "./LoadingScreen";
-// const AttachmentsModal = lazy(() => import("./AttachmentsModal"));
-
-// export default function JobModal({ setShowJobModal, jobDetails }) {
-//   const [attachmentsModalActiveStatus, setAttachmentsModalActiveStatus] = useState(false);
-//   const [selectedImage, setSelectedImage] = useState(null);
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-//       <div className="bg-white rounded-xl shadow-lg w-[80vw] max-w-3xl h-[80vh] overflow-y-auto relative">
-//         <section className="flex sticky top-0 justify-between items-center p-4 border-b bg-gradient-to-r from-orange-600 to-red-200 text-white rounded-t-xl">
-//           <h1 className="text-lg font-semibold">📄 FlashFire Jobs</h1>
-//           <button
-//             onClick={() => setShowJobModal(false)}
-//             className="hover:bg-purple-700 p-1 rounded-full"
-//           >
-//             <X className="w-5 h-5" />
-//           </button>
-//         </section>
-
-//         <div className="p-6 space-y-6">
-//           <div className="space-y-2">
-//             <FileText />
-//             <h2 className="text-xl font-semibold text-gray-800 inline"> Job Details</h2>
-//             <hr />
-//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
-//               <div>
-//                 <span className="font-medium"><Building className="w-4 h-4 inline mr-1" /> Company Name:</span> <br /> {jobDetails.companyName}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><Calendar className="w-4 h-4 inline mr-1"/> Added On:</span> <br /> {jobDetails.createdAt}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><Briefcase className="w-4 h-4 inline mr-1" /> Position:</span> <br /> {jobDetails.jobTitle}
-//               </div>
-//               <div>
-//                 <span className="font-medium"><User className="w-4 h-4 inline mr-1"/> Candidate:</span> <br /> {jobDetails.userID}
-//               </div>
-//             </div>
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Job Link</h3>
-//           <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
-//             <a 
-//               href={jobDetails.joblink}
-//               target="_blank"
-//               rel="noopener noreferrer"
-//               className="text-gray-700 hover:text-blue-600 hover:underline transition-colors duration-200 cursor-pointer break-all"
-//             >
-//               {jobDetails.joblink}
-//             </a>
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Job Description</h3>
-//           <div className="bg-gray-50 p-4 rounded-lg shadow-inner w-full">
-//             {jobDetails?.jobDescription ? (
-//               <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
-//                 {jobDetails.jobDescription}
-//               </div>
-//             ) : (
-//               <p className="text-gray-500 italic text-sm">No job description available.</p>
-//             )}
-//           </div>
-
-//           <h3 className="font-semibold text-gray-800 mb-2">Resume / Attachments</h3>
-//           <div className="flex justify-around bg-gray-50 p-4 rounded-lg shadow-inner w-full gap-4 overflow-x-scroll">
-//             {jobDetails?.attachments?.length ? (
-//               jobDetails.attachments.map((item) => (
-//                 <img
-//                   onClick={() => {
-//                     setSelectedImage(item);
-//                     setAttachmentsModalActiveStatus(true);
-//                   }}
-//                   src={item}
-//                   alt="resume"
-//                   key={item}
-//                   className="w-[20vw] h-[30vh] cursor-pointer object-cover"
-//                 />
-//               ))
-//             ) : (
-//               <h2 className="text-gray-500 italic">No resume uploaded yet.</h2>
-//             )}
-//           </div>
-
-//           <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-//             <h3 className="font-semibold text-gray-800 mb-2">📈 Timeline</h3>
-//             <div className="space-y-2 flex overflow-x-scroll">
-//               {jobDetails?.timeline?.length > 0 ? (
-//                 jobDetails.timeline.map((item, idx) => (
-//                   <div
-//                     key={idx}
-//                     className="flex items-center justify-center space-x-2 text-sm text-gray-600"
-//                   >
-//                     <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-//                     <span>{item}</span>
-//                     <ArrowRight />
-//                   </div>
-//                 ))
-//               ) : (
-//                 <div className="text-gray-500 italic">No timeline available.</div>
-//               )}
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {attachmentsModalActiveStatus && (
-//       <Suspense fallback={<LoadingScreen />}>
-//         <AttachmentsModal
-//           imageLink={selectedImage}
-//           setAttachmentsModalActiveStatus={setAttachmentsModalActiveStatus}
-//         />
-//       </Suspense>
-//       )}
-//     </div>
-//   );
-// }
-
-
 import {
   X,
   Briefcase,
@@ -243,6 +8,7 @@ import {
   Link,
   Copy,
   ExternalLink,
+  TimerIcon,
 } from "lucide-react";
 import { useState, Suspense, lazy } from "react";
 import LoadingScreen from "./LoadingScreen";
@@ -283,6 +49,12 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
       icon: User,
       color: "bg-orange-50 text-orange-700 border-orange-200",
     },
+    {
+      id: "timeline",
+      label: "Application Timeline",
+      icon: TimerIcon,
+      color: "bg-brown-800 text-orange-700 border-orange-200",
+    },
   ];
 
   const renderContent = () => {
@@ -291,8 +63,9 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
         return (
           <div className="space-y-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Company Name</h4>
-              <p className="text-lg font-semibold text-gray-900">{jobDetails.companyName}</p>
+              <h4 className="text-sm font-medium text-gray-600 mb-6">Company Name</h4>
+              
+              <p className="text-lg flex gap-4 font-semibold text-gray-900"> <img src={`https://www.${jobDetails.companyName}.com/favicon.ico`} alt="Company Logo" className="w-[30px] h-[30px] " /> {jobDetails.companyName}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-center mb-2">
@@ -413,6 +186,42 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
           </div>
         );
 
+        case "timeline":
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">📈 Application Timeline</h4>
+
+        {jobDetails?.timeline?.length > 0 ? (
+          <ol className="relative border-s border-gray-200">
+            {jobDetails.timeline.map((event, idx) => (
+              <li key={idx} className="mb-10 ms-6">
+                <span className="absolute flex items-center justify-center w-6 h-6 bg-purple-100 rounded-full -start-3 ring-8 ring-white">
+                  <svg
+                    className="w-3 h-3 text-purple-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 00-1.414 0L10 10.586 6.707 7.293A1 1 0 105.293 8.707l4 4a1 1 0 001.414 0l6-6a1 1 0 000-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+                <h3 className="flex items-center mb-1 text-md font-semibold text-purple-800">
+                  {event}
+                </h3>
+                <p className="text-sm text-gray-500">Step {idx + 1}</p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="text-gray-500 italic">No timeline available.</div>
+        )}
+      </div>
+    </div>
+  );
       default:
         return null;
     }
@@ -492,4 +301,3 @@ export default function JobModal({ setShowJobModal, jobDetails }) {
     </div>
   );
 }
-

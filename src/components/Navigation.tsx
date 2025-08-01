@@ -67,7 +67,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <FileText className="w-7 h-7 text-white" />
+                {/* <FileText className="w-7 h-7 text-white" /> */}
+                <img src="./Logo.png" alt="" className='rounded-xl' />
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">

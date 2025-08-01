@@ -6,16 +6,23 @@ import { useUserJobs } from '../state_management/UserJobs.tsx';
 import { UserContext } from '../state_management/UserContext.js';
 import LoadingScreen from './LoadingScreen.tsx';
 import { calculateDashboardStats } from '../utils/storage.ts';
+// import NewUserModal from './NewUserModal.tsx'
 
 const Dashboard: React.FC = () => {
-  const [jobs, setJobs] = React.useState([]);
   const context = useContext(UserContext);
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const { userJobs, setUserJobs, loading } = useUserJobs(); 
+  if (!context) {
+    console.error("UserContext is null");
+    navigate('/login');
+    return null;
+  }
 
+  const { token, userDetails, setData } = context;
+  const { userJobs, setUserJobs, loading } = useUserJobs(); 
   const [loadingDetails, setLoadingDetails] = useState(false);
+
   async function FetchAllJobs(localToken, localUserDetails) {
     try {
       setLoadingDetails(true);
@@ -26,13 +33,10 @@ const Dashboard: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setUserJobs(data.allJobs);
-        setJobs(data.allJobs);
+        setUserJobs(data?.allJobs);
       } else if (data.message === 'invalid token please login again') {
         localStorage.clear();
         navigate('/login');
-      } else {
-        console.error('Error fetching jobs:', data.message);
       }
     } catch (err) {
       console.error(err);
@@ -42,21 +46,15 @@ const Dashboard: React.FC = () => {
   }
 
   useEffect(() => {
-    const localToken = context?.token || localStorage.getItem('token');
-    const localUserDetails =
-      context?.userDetails || JSON.parse(localStorage.getItem('userDetails') || '{}');
-
-    if (!localToken || !localUserDetails || !localUserDetails.email) {
-      localStorage.clear();
+    if (!token || !userDetails) {
       navigate('/login');
       return;
     }
-
-    FetchAllJobs(localToken, localUserDetails);
-  }, []);
-    const stats = calculateDashboardStats(jobs);
+    FetchAllJobs(token, userDetails);
+  }, [token, userDetails]);
+    const stats = calculateDashboardStats(userJobs);
   
-  const recentJobs = jobs
+  const recentJobs = userJobs
     .sort((a, b) => new Date(b?.updatedAt).getTime() - new Date(a?.updatedAt).getTime())
     .slice(0, 6);
 
@@ -70,8 +68,10 @@ const Dashboard: React.FC = () => {
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
+        {/* {newUserModal && <NewUserModal setNewUserModal={setNewUserModal} />}   */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to Your Career Dashboard
@@ -80,6 +80,23 @@ const Dashboard: React.FC = () => {
             Track your job applications, monitor your progress, and optimize your career journey with AI-powered insights.
           </p>
         </div>
+        {/* {userDetails.planType === 'Free Trial' && (
+  <div className="rounded-2xl p-2 m-4 border-2 absolute w-1/4 top-[10%] left-[70%] border-yellow-400 border-dashed bg-yellow-50 shadow-md">
+    <h1 className="text-lg font-semibold text-yellow-800 mb-2">
+      You’re on the <span className="underline">Free Plan</span>. Upgrade to a <span className="font-bold">Paid Plan</span> to automate your entire job search!
+    </h1>
+    <p className="text-sm text-gray-700">
+      <span className="font-medium">Job Applications Remaining:</span>{" "}
+      {
+        userJobs.filter(
+          (item) =>
+            item.currentStatus !== "saved" &&
+            item.currentStatus !== "deleted"
+        ).length
+      }
+    </p>
+  </div>
+)} */}
 
         {/* Main Stats Grid */}
         <div data-aos='fade-right' className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
@@ -90,7 +107,7 @@ const Dashboard: React.FC = () => {
                 <Briefcase className="w-7 h-7 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-gray-900">{jobs?.length}</p>
+                <p className="text-3xl font-bold text-gray-900">{userJobs?.length}</p>
                 <p className="text-sm font-medium text-gray-500">Total Applications</p>
               </div>
             </div>
@@ -109,7 +126,7 @@ const Dashboard: React.FC = () => {
                 <Users className="w-7 h-7 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-gray-900">{jobs?.filter(item=>item.currentStatus == 'interviewing').length}</p>
+                <p className="text-3xl font-bold text-gray-900">{userJobs?.filter(item=>item.currentStatus == 'interviewing').length}</p>
                 <p className="text-sm font-medium text-gray-500">Active Interviews</p>
               </div>
             </div>
@@ -128,7 +145,7 @@ const Dashboard: React.FC = () => {
                 <Award className="w-7 h-7 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-gray-900">{jobs?.filter(item=>item.currentStatus == 'offer').length}</p>
+                <p className="text-3xl font-bold text-gray-900">{userJobs?.filter(item=>item.currentStatus == 'offer').length}</p>
                 <p className="text-sm font-medium text-gray-500">Offers Received</p>
               </div>
             </div>
@@ -165,7 +182,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg font-semibold text-gray-900">{jobs?.filter(item=>item.currentStatus == 'applied').length}</p>
+                <p className="text-lg font-semibold text-gray-900">{userJobs?.filter(item=>item.currentStatus == 'applied').length}</p>
                 <p className="text-sm text-gray-600">Applications Sent</p>
               </div>
               <FileText className="w-8 h-8 text-blue-500" />
@@ -175,7 +192,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg font-semibold text-gray-900">{((jobs?.filter(item=>item.currentStatus == 'interviewing').length + jobs?.filter(item=>item.currentStatus == 'offer').length + jobs?.filter(item=>item.currentStatus == 'rejected').length)/jobs.length)*100}%</p>
+                <p className="text-lg font-semibold text-gray-900">{((userJobs?.filter(item=>item.currentStatus == 'interviewing').length + userJobs?.filter(item=>item.currentStatus == 'offer').length + userJobs?.filter(item=>item.currentStatus == 'rejected').length)/userJobs.length)*100}%</p>
                 <p className="text-sm text-gray-600">Response Rate</p>
               </div>
               <Target className="w-8 h-8 text-green-500" />
@@ -185,7 +202,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg font-semibold text-gray-900">{jobs?.filter(item=>item.currentStatus == 'saved').length}</p>
+                <p className="text-lg font-semibold text-gray-900">{userJobs?.filter(item=>item.currentStatus == 'saved').length}</p>
                 <p className="text-sm text-gray-600">Jobs Saved</p>
               </div>
               <Clock className="w-8 h-8 text-amber-500" />
@@ -199,11 +216,11 @@ const Dashboard: React.FC = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {[
-              { status: 'saved', label: 'Saved', count: jobs?.filter(item=>item.currentStatus == 'saved').length, color: 'bg-gray-500', icon: Clock },
-              { status: 'applied', label: 'Applied', count: jobs?.filter(item=>item.currentStatus == 'applied').length, color: 'bg-blue-500', icon: FileText },
-              { status: 'interviewing', label: 'Interviewing', count: jobs?.filter(item=>item.currentStatus == 'interviewing').length, color: 'bg-amber-500', icon: Users },
-              { status: 'offer', label: 'Offers', count: jobs?.filter(item=>item.currentStatus == 'offer').length, color: 'bg-green-500', icon: CheckCircle },
-              { status: 'rejected', label: 'Rejected', count: jobs?.filter(item=>item.currentStatus == 'rejected').length, color: 'bg-red-500', icon: XCircle },
+              { status: 'saved', label: 'Saved', count: userJobs?.filter(item=>item.currentStatus == 'saved').length, color: 'bg-gray-500', icon: Clock },
+              { status: 'applied', label: 'Applied', count: userJobs?.filter(item=>item.currentStatus == 'applied').length, color: 'bg-blue-500', icon: FileText },
+              { status: 'interviewing', label: 'Interviewing', count: userJobs?.filter(item=>item.currentStatus == 'interviewing').length, color: 'bg-amber-500', icon: Users },
+              { status: 'offer', label: 'Offers', count: userJobs?.filter(item=>item.currentStatus == 'offer').length, color: 'bg-green-500', icon: CheckCircle },
+              { status: 'rejected', label: 'Rejected', count: userJobs?.filter(item=>item.currentStatus == 'rejected').length, color: 'bg-red-500', icon: XCircle },
             ].map(({ status, label, count, color, icon: Icon }) => (
               <div key={status} className="text-center">
                 <div className={`w-16 h-16 ${color} rounded-full flex items-center justify-center mx-auto mb-3`}>
@@ -345,3 +362,5 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+
