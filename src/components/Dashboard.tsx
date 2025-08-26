@@ -4,14 +4,16 @@ import React, { useEffect, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserJobs } from '../state_management/UserJobs.tsx';
 import { UserContext } from '../state_management/UserContext.js';
+import { useUserProfile } from '../state_management/ProfileContext.tsx';
 import LoadingScreen from './LoadingScreen.tsx';
 import { calculateDashboardStats } from '../utils/storage.ts';
-// import NewUserModal from './NewUserModal.tsx'
+import NewUserModal from './NewUserModal.tsx'
 
 const Dashboard: React.FC = ({setUserProfileFormVisibility}) => {
   const context = useContext(UserContext);
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const { userProfile, isProfileComplete } = useUserProfile();
 
   if (!context) {
     console.error("UserContext is null");
@@ -22,14 +24,17 @@ const Dashboard: React.FC = ({setUserProfileFormVisibility}) => {
   const { token, userDetails, setData } = context;
   const { userJobs, setUserJobs, loading } = useUserJobs(); 
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   async function FetchAllJobs(localToken, localUserDetails) {
     try {
       setLoadingDetails(true);
-      const res = await fetch(`${API_BASE_URL}/api/alljobs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: localToken, userDetails: localUserDetails }),
+      const res = await fetch(`${API_BASE_URL}/getalljobs`, {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localToken}`
+        }
       });
       const data = await res.json();
       if (res.ok) {
@@ -50,14 +55,24 @@ const Dashboard: React.FC = ({setUserProfileFormVisibility}) => {
       navigate('/login');
       return;
     }
-     const raw = localStorage.getItem('userAuth');
     
-    const auth = JSON.parse(raw);
-    if(auth.userProfile?.email?.length == 0 ||auth.userProfile == null ){
-      setUserProfileFormVisibility(true);
+    // Check if profile is complete
+    console.log('Dashboard - Profile completion check:', {
+      userProfile: userProfile,
+      isComplete: isProfileComplete(),
+      hasProfile: !!userProfile
+    });
+    
+    if (!isProfileComplete()) {
+      console.log('Profile incomplete, showing modal');
+      setShowProfileModal(true);
+    } else {
+      console.log('Profile complete, hiding modal');
+      setShowProfileModal(false);
     }
+    
     FetchAllJobs(token, userDetails);
-  }, [token, userDetails]);
+  }, [token, userDetails, isProfileComplete]);
     const stats = calculateDashboardStats(userJobs);
   
   const recentJobs = userJobs
@@ -74,10 +89,15 @@ const Dashboard: React.FC = ({setUserProfileFormVisibility}) => {
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {showProfileModal && (
+        <NewUserModal 
+          setUserProfileFormVisibility={setShowProfileModal}
+          onProfileComplete={() => setShowProfileModal(false)}
+        />
+      )}
        
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        {/* {newUserModal && <NewUserModal setNewUserModal={setNewUserModal} />}   */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to Your Career Dashboard

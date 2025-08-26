@@ -133,7 +133,7 @@ async function handleVerifyOtp(e: FormEvent) {
       const data: LoginResponse = await res.json();
       setResponse(data);
 
-      if (data?.message === "Login Sucess..!") {
+      if (data?.message === "Login Success..!") {
         setData({ userDetails: data?.userDetails, token: data?.token });
         setProfileFromApi(data.userProfile);
         localStorage.setItem("userAuth", JSON.stringify({ token: data?.token, userDetails: data?.userDetails ,userProfile : data?.userProfile}));

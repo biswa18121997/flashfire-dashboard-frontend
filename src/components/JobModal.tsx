@@ -33,7 +33,7 @@ const DOC_UPLOAD_PRESET =
   IMG_UPLOAD_PRESET;
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
-const JOB_UPDATE_ENDPOINT = `${API_BASE}/api/jobs`;
+const JOB_UPDATE_ENDPOINT = `${API_BASE}/updatechanges`;
 const PLAN_ENDPOINT = `${API_BASE}/api/plans/select`;
 
 /* ---------- Cloudinary uploader (unsigned) ---------- */
@@ -436,11 +436,14 @@ useEffect(() => {
 <div className="bg-white rounded-lg border border-gray-200 p-4">
   <div className="text-sm font-medium text-gray-600 mb-2">Company Name</div>
   <div className="flex items-center gap-3">
-    <img
-      src={`https://www.google.com/s2/favicons?domain=${jobDetails.companyName}.com&sz=64`}
-      alt="Company Logo"
-      className="w-[40px] h-[40px]"
-    />
+         <img
+       src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(jobDetails.companyName)}.com&sz=64`}
+       alt="Company Logo"
+       className="w-[40px] h-[40px]"
+       onError={(e) => {
+         e.currentTarget.style.display = 'none';
+       }}
+     />
     <p className="text-lg font-semibold text-gray-900">{jobDetails.companyName}</p>
   </div>
 </div>
