@@ -23,6 +23,9 @@ export default function LoginPage({activeTab, onTabChange}: {activeTab: string, 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [response, setResponse] = useState<LoginResponse | null>(null);
+  const [otp, setOtp] = useState("");
+const [stage, setStage] = useState<'request'|'verify'>('request');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const navigate = useNavigate();
   const { setData } = useContext(UserContext);
@@ -73,6 +76,43 @@ const statsData = [
     </div>
   );
 };
+async function handleRequestOtp(e: FormEvent) {
+  e.preventDefault();
+  if (!email) return setResponse({ message: "Email is required" } as any);
+  setIsLoading(true);
+  try {
+    const r = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const data = await r.json();
+    setResponse({ message: r.ok ? "OTP sent to your email" : (data?.message || "Failed to send OTP") } as any);
+    if (r.ok) setStage('verify');
+  } finally { setIsLoading(false); }
+}
+
+async function handleVerifyOtp(e: FormEvent) {
+  e.preventDefault();
+  if (!email || !otp) return setResponse({ message: "Email and OTP are required" } as any);
+  setIsLoading(true);
+  try {
+    const r = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp })
+    });
+    const data: LoginResponse = await r.json();
+    if (r.ok && data?.message === "Login Sucess..!") {
+      setData({ userDetails: data.userDetails, token: data.token });
+      setProfileFromApi(data.userProfile);
+      localStorage.setItem("userAuth", JSON.stringify({
+        token: data.token, userDetails: data.userDetails, userProfile: data.userProfile
+      }));
+      navigate("/");
+    } else {
+      setResponse({ message: data?.message || "Invalid or expired code" });
+    }
+  } finally { setIsLoading(false); }
+}
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -193,87 +233,53 @@ const statsData = [
 /> */}
 {/* <hr />
 <h1 className="text-center font-mono text-xl">OR</h1> */}
-        <form onSubmit={handleLogin} className="space-y-5">
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 text-gray-400" />
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 rounded-lg border text-sm md:text-base ${
-                  errors.email ? "border-red-300 bg-red-50" : "border-gray-300"
-                }`}
-                placeholder="you@example.com"
-              />
-            </div>
-            {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
-          </div>
+        <form onSubmit={stage === 'request' ? handleRequestOtp : handleVerifyOtp} className="space-y-5">
+  {/* Email */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+    <div className="relative">
+      <Mail className="absolute left-3 top-3 text-gray-400" />
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300"
+        placeholder="you@example.com"
+      />
+    </div>
+  </div>
 
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" />
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full pl-10 pr-10 py-3 rounded-lg border text-sm md:text-base ${
-                  errors.password ? "border-red-300 bg-red-50" : "border-gray-300"
-                }`}
-                placeholder="********"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3"
-              >
-                {showPassword ? (
-                  <EyeOff className="text-gray-400" />
-                ) : (
-                  <Eye className="text-gray-400" />
-                )}
-              </button>
-            </div>
-            {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
-          </div>
+  {stage === 'verify' && (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Enter the 6-digit code</label>
+      <input
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        maxLength={6}
+        className="w-full px-4 py-3 rounded-lg border border-gray-300"
+        placeholder="123456"
+      />
+      <button type="button" className="mt-2 text-xs text-indigo-600 underline"
+        onClick={() => handleRequestOtp(new Event('submit') as any)}>
+        Resend code
+      </button>
+    </div>
+  )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg text-base flex justify-center items-center gap-2 hover:scale-[1.02] transition"
-          >
-            {isLoading ? (
-              <span className="animate-spin border-b-2 border-white w-5 h-5 rounded-full"></span>
-            ) : (
-              <>
-                <span>Login</span>
-                <ArrowRight />
-              </>
-            )}
-          </button>
+  <button
+    type="submit"
+    disabled={isLoading || (stage === 'verify' && otp.length < 4)}
+    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg flex justify-center items-center gap-2"
+  >
+    {isLoading ? 'Please wait…' : (stage === 'request' ? 'Send OTP' : 'Verify & Login')}
+  </button>
 
-          {/* Response message */}
-          {response?.message && (
-            <p
-              className={`text-center text-sm mt-2 ${
-                response?.message === "Login Sucess..!" ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {response?.message}
-            </p>
-          )}
-        </form>
+  {response?.message && (
+    <p className={`text-center text-sm mt-2 ${/success/i.test(response.message) ? 'text-green-600' : 'text-gray-700'}`}>
+      {response.message}
+    </p>
+  )}
+</form>
 
         <div className="mt-6 flex justify-center gap-3 text-xs text-gray-500">
           <CheckCircle className="w-4 h-4 text-green-500" />
