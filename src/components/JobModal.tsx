@@ -78,19 +78,24 @@ async function persistAttachmentsToJob({
     urls,
     token,
     role,
+    userDetails,
+    operationsUserName,
 }: {
     jobID: string;
     userEmail: string;
     urls: string[];
     token: string | null;
     role?: string;
+    userDetails?: any;
+    operationsUserName?: string;
 }) {
     if (role == "operations") {
         const payload = {
             action: "edit",
             jobID,
-            userDetails: { email: userEmail },
+            userDetails: { email: userEmail, name: operationsUserName || userEmail },
             attachmentUrls: urls,
+            role: role,
         };
 
         const res = await fetch(`${API_BASE}/operations/jobs`, {
@@ -108,9 +113,10 @@ async function persistAttachmentsToJob({
         const payload = {
             action: "edit",
             jobID,
-            userDetails: { email: userEmail },
+            userDetails: { email: userEmail, name: role === "operations" ? operationsUserName : (userDetails?.name || userEmail) },
             attachmentUrls: urls,
             token,
+            role: role,
         };
 
         const res = await fetch(JOB_UPDATE_ENDPOINT, {
@@ -236,7 +242,7 @@ export default function JobModal({
     const setData = ctx?.setData ?? null;
     const currentUser = ctx?.userDetails ?? {};
 
-    const { role } = useOperationsStore();
+    const { role, name: operationsUserName } = useOperationsStore();
 
     // NEW (paste-to-upload buffer)
     const [pastedImages, setPastedImages] = useState<File[]>([]);
@@ -404,13 +410,15 @@ useEffect(() => {
   // ✅ Append uploaded pasted images to existing attachments
   setAttachments((prev) => [...(Array.isArray(prev) ? prev : []), ...urls]);
 
-                  const resp = await persistAttachmentsToJob({
-              jobID,
-              userEmail,
-              urls, // persist all new URLs
-              token,
-                    role,
-          });
+                   const resp = await persistAttachmentsToJob({
+               jobID,
+               userEmail,
+               urls,
+               token,
+               role,
+               userDetails: currentUser, // Pass user details
+               operationsUserName, // Pass operations user name
+           });
 
   if (resp?.updatedJobs) {
     setUserJobs(resp.updatedJobs);
@@ -484,6 +492,8 @@ useEffect(() => {
                 urls: [url],
                 token,
                 role,
+                userDetails: currentUser,
+                operationsUserName,
             });
 
             if (resp?.updatedJobs) {
@@ -872,7 +882,7 @@ useEffect(() => {
     //           📧 Emails found in Job Description to reach out:
     //         </h5>
     //         <ul className="list-disc list-inside text-sm text-gray-700">
-    //           {emailMatch.map((email, idx) => (
+    //           {emailMatch.map((email: string, idx: number) => (
     //             <li key={idx} className="flex p-1 m-1"> <Mail className="size-3 m-1" /> {email}</li>
     //           ))}
     //         </ul>
@@ -944,13 +954,13 @@ useEffect(() => {
         <h5 className="text-sm font-semibold text-yellow-800 mb-2">
           📧 Emails found in Job Description to reach out:
         </h5>
-        <ul className="list-disc list-inside text-sm text-gray-700">
-          {emailMatch.map((email, idx) => (
-            <li key={idx} className="flex p-1 m-1">
-              <Mail className="size-3 m-1" /> {email}
-            </li>
-          ))}
-        </ul>
+         <ul className="list-disc list-inside text-sm text-gray-700">
+           {emailMatch.map((email: string, idx: number) => (
+             <li key={idx} className="flex p-1 m-1">
+               <Mail className="size-3 m-1" /> {email}
+             </li>
+           ))}
+         </ul>
       </div>
     )}
   </div>
