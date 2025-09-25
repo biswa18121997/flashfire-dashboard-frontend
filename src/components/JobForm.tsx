@@ -220,6 +220,7 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
         currentStatus: formData.status,
         userID: userDetails.email,
         attachments: [],
+        timeline: ["Added"],
         createdAt: new Date().toISOString(),
         updatedAt: nowIN, // so it sorts to the top immediately
       };
