@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, Suspense, lazy } from "react";
-import { Search } from "lucide-react";
+import React, { useState, useEffect, useContext, Suspense, lazy, useRef } from "react";
+import { Search, Plus } from "lucide-react";
 import { Job, JobStatus } from "../types";
 const JobForm = lazy(() => import("./JobForm"));
 const JobCard = lazy(() => import("./JobCard"));
@@ -27,6 +27,8 @@ const JobTracker = () => {
   // near other useState hooks
 const [pendingMove, setPendingMove] = useState<{ jobID: string; status: JobStatus } | null>(null);
 
+  const boardRef = useRef<HTMLDivElement | null>(null);
+
     const [columnPages, setColumnPages] = useState<{
         [key in JobStatus]?: number;
     }>({});
@@ -37,12 +39,12 @@ const [pendingMove, setPendingMove] = useState<{ jobID: string; status: JobStatu
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const statusColumns: { status: JobStatus; label: string; color: string }[] = [
-    { status: 'saved', label: 'Saved', color: 'bg-gray-50 border-gray-200' },
-    { status: 'applied', label: 'Applied', color: 'bg-blue-50 border-blue-200' },
-    { status: 'interviewing', label: 'Interviewing', color: 'bg-amber-50 border-amber-200' },
-    { status: 'offer', label: 'Offers', color: 'bg-green-50 border-green-200' },
-    { status: 'rejected', label: 'Rejected', color: 'bg-red-50 border-red-200' },
-    { status: 'deleted', label: 'Removed', color: 'bg-red-500/50 border-red-100' }
+    { status: "saved", label: "Saved", color: "bg-gray-50" },
+    { status: "applied", label: "Applied", color: "bg-blue-50" },
+    { status: "interviewing", label: "Interviewing", color: "bg-amber-50" },
+    { status: "offer", label: "Offers", color: "bg-green-50" },
+    { status: "rejected", label: "Rejected", color: "bg-red-50" },
+    { status: "deleted", label: "Removed", color: "bg-gray-100" },
   ];
   // useEffect(()=>{
   //    setUserJobs(userJobs);
@@ -179,16 +181,12 @@ useEffect(() => {
       setUserJobs(responseFromServer.NewJobList);
       setShowJobForm(false);
       if (responseFromServer.message == 'Job Added Succesfully') {
-        setJobsData(responseFromServer.NewJobList);
+        setUserJobs(responseFromServer.NewJobList);
         return;
       }
-      if (onSuccess) onSuccess();
-      onCancel(); // close modal
     } catch (err) {
       console.log(err);
-      setError("Failed to save job. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      toastUtils.error("Failed to save job. Please try again.");
     }
   }
 
@@ -208,6 +206,28 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
+    };
+
+    const handleDragOverBoard = (e: React.DragEvent) => {
+        e.preventDefault();
+        const container = boardRef.current;
+        if (!container) return;
+
+        const { clientX } = e;
+        const { left, right } = container.getBoundingClientRect();
+        const edgeSize = 120;
+
+        if (clientX - left < edgeSize) {
+            const distance = clientX - left;
+            const intensity = (edgeSize - distance) / edgeSize;
+            const scrollSpeed = Math.max(20, intensity * 60);
+            container.scrollBy({ left: -scrollSpeed, behavior: "smooth" });
+        } else if (right - clientX < edgeSize) {
+            const distance = right - clientX;
+            const intensity = (edgeSize - distance) / edgeSize;
+            const scrollSpeed = Math.max(20, intensity * 60);
+            container.scrollBy({ left: scrollSpeed, behavior: "smooth" });
+        }
     };
 
     const onDeleteJob = async (jobID: string) => {
@@ -436,15 +456,14 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
     };
 
   return (
-    <div className="px-4 sm:px-2 lg:px-1 py-4">
-      <div className="flex flex-row sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div className='flex flex-col justify-around items-start w-full ml-10'>
+    <div className="px-4 sm:px-6 lg:px-8 py-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div className="flex flex-col justify-around items-start w-full">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Job Tracker</h2>
-          <p className="text-gray-600 ">Track your job applications and manage your career pipeline</p>
+          <p className="text-gray-600">Track your job applications and manage your career pipeline</p>
         </div>
-       
-        <div className="mt-4 sm:mt-0 flex items-center justify-center gap-4 w-full">
-          {/* Search Input */}
+        <div className="mt-4 sm:mt-0 flex items-center justify-end gap-4 w-full">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -452,7 +471,7 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
               placeholder="Search jobs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
             />
             {filteredJobs.length > 0 && (
     <div className="absolute top-full mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
@@ -474,20 +493,21 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
     </div>
   )}
           </div>
-
-          {/* Add Job Button */}
           <button
             onClick={() => setShowJobForm(true)}
-            className="whitespace-nowrap bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105"
+            className="whitespace-nowrap bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-700 hover:to-purple-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Add Jobs
           </button>
         </div>
-
       </div>
 
-            <div className="flex gap-2 justify-evenly w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1 m-4 w-full">
+      {/* Board */}
+      <div
+        ref={boardRef}
+        className="flex gap-6 overflow-x-auto pb-6"
+        onDragOver={handleDragOverBoard}
+      >
                     {statusColumns.map(({ status, label, color }) => {
                         const filteredAndSortedJobs =
                             (userJobs && Array.isArray(userJobs))
@@ -523,36 +543,63 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                         return (
                             <div
                                 key={status}
-                                className={`rounded-lg border-2 border-dashed ${color} p-1 min-h-[600px] flex flex-col`}
+                                className={`${color} rounded-xl p-4 min-w-[280px] w-80 flex flex-col shadow-sm border border-gray-200`}
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, status)}
                             >
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-gray-900">
-                                        {label}
-                                    </h3>
-                                    <span className="bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-600">
-                                        {
-                                            userJobs?.filter((item) =>
-                                                item.currentStatus?.startsWith(
-                                                    status
-                                                )
-                                            ).length
-                                        }
+                                {/* Column Header */}
+                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className={`w-3 h-3 rounded-full ${
+                                                status === "saved"
+                                                    ? "bg-gray-400"
+                                                    : status === "applied"
+                                                    ? "bg-blue-500"
+                                                    : status === "interviewing"
+                                                    ? "bg-amber-500"
+                                                    : status === "offer"
+                                                    ? "bg-green-500"
+                                                    : status === "rejected"
+                                                    ? "bg-red-500"
+                                                    : status === "deleted"
+                                                    ? "bg-gray-700"
+                                                    : "bg-gray-300"
+                                            }`}
+                                        ></div>
+                                        <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">{label}</h3>
+                                    </div>
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            status === "saved"
+                                                ? "bg-gray-100 text-gray-700"
+                                                : status === "applied"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : status === "interviewing"
+                                                ? "bg-amber-100 text-amber-700"
+                                                : status === "offer"
+                                                ? "bg-green-100 text-green-700"
+                                                : status === "rejected"
+                                                ? "bg-red-100 text-red-700"
+                                                : status === "deleted"
+                                                ? "bg-gray-200 text-gray-700"
+                                                : ""
+                                        }`}
+                                    >
+                                        {userJobs?.filter((item) => item.currentStatus?.startsWith(status)).length}
                                     </span>
                                 </div>
 
-                                <div className="flex-1 space-y-2">
+                                {/* Job Cards */}
+                                <div className="flex-1 space-y-3 min-h-[500px]">
                                     <Suspense fallback={<LoadingScreen />}>
                                         {paginatedJobs?.map((job) => (
                                             <div key={job.jobID} className="relative">
                                                 <JobCard
-                                                    showJobModal={showJobModal}
-                                                    setShowJobModal={
-                                                        setShowJobModal
-                                                    }
-                                                    setSelectedJob={setSelectedJob}
                                                     job={job}
+                                                    showJobModal={showJobModal}
+                                                    setShowJobModal={setShowJobModal}
+                                                    setSelectedJob={setSelectedJob}
                                                     onDragStart={handleDragStart}
                                                     onEdit={() =>
                                                         setEditingJob(job)
@@ -574,14 +621,17 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                                     </Suspense>
                                     {filteredAndSortedJobs &&
                                         filteredAndSortedJobs.length === 0 && (
-                                            <div className="text-center py-8 text-gray-500">
-                                                <p className="text-sm">
-                                                    No jobs in this stage
-                                                </p>
+                                            <div className="text-center py-12 text-gray-400">
+                                                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <Plus className="w-5 h-5" />
+                                                </div>
+                                                <p className="text-sm font-medium">No jobs yet</p>
+                                                <p className="text-xs mt-1">Drag jobs here or add new ones</p>
                                             </div>
                                         )}
                                 </div>
 
+                                {/* Pagination */}
                                 {totalPages > 1 && (
                                     <div className="mt-4 pt-3 border-t border-gray-200">
                                         <div className="flex items-center justify-between">
@@ -593,19 +643,17 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                                                     )
                                                 }
                                                 disabled={currentPage === 1}
-                                                className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
                                                     currentPage === 1
                                                         ? "text-gray-400 cursor-not-allowed"
-                                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
                                                 }`}
                                             >
-                                                ‹ Prev
+                                                ← Prev
                                             </button>
-
-                                            <span className="text-xs text-gray-600 font-medium">
-                                                {currentPage}/{totalPages}
+                                            <span className="text-xs text-gray-600 font-medium bg-white/50 px-2 py-1 rounded">
+                                                {currentPage} of {totalPages}
                                             </span>
-
                                             <button
                                                 onClick={() =>
                                                     updateColumnPage(
@@ -616,13 +664,13 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                                                 disabled={
                                                     currentPage === totalPages
                                                 }
-                                                className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
                                                     currentPage === totalPages
                                                         ? "text-gray-400 cursor-not-allowed"
-                                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                                        : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
                                                 }`}
                                             >
-                                                Next ›
+                                                Next →
                                             </button>
                                         </div>
                                     </div>
@@ -630,13 +678,11 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                             </div>
                         );
                     })}
-                </div>
-            </div>
+      </div>
             {showJobModal && (
                 <Suspense fallback={<LoadingScreen />}>
                     <JobModal
                         setShowJobModal={setShowJobModal}
-                        showJobModal={showJobModal}
                         jobDetails={selectedJob}
                         initialSection={
                             pendingMove &&
@@ -686,9 +732,6 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                             <JobForm
                                 setUserJobs={setUserJobs}
                                 job={editingJob}
-                                onSubmit={
-                                    editingJob ? handleEditJob : handleAddJob
-                                }
                                 onCancel={() => {
                                     setShowJobForm(false);
                                     setEditingJob(null);
