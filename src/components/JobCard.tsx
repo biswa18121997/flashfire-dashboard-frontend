@@ -8,7 +8,7 @@ interface JobCardProps {
   onEdit: () => void;
   onDelete: () => void;
   showJobModal: boolean;
-  setSelectedJob: React.Dispatch<React.SetStateAction<{}>>;
+  setSelectedJob: React.Dispatch<React.SetStateAction<Job | null>>;
   setShowJobModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
