@@ -15,8 +15,6 @@ import { useUserProfile } from "../state_management/ProfileContext.tsx";
 import LoadingScreen from "./LoadingScreen.tsx";
 import NewUserModal from "./NewUserModal.tsx";
 import { useOperationsStore } from "../state_management/Operations.ts";
-import ReferralModal from "./ReferralModal.tsx";
-import { generateReferralIdentifier } from "../utils/generateUsername.ts";
 import { useJobsSessionStore } from "../state_management/JobsSessionStore";
 
 const JobForm = lazy(() => import("./JobForm"));
@@ -44,8 +42,7 @@ const Dashboard: React.FC = () => {
     // Use session storage for analytics
     const { getDashboardStats } = useJobsSessionStore();
     const dashboardStats = getDashboardStats();
-    // Referral Modal State
-    const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
+    
 
     async function FetchAllJobs(localToken: string, localUserDetails: any) {
         if (role == "operations") {
@@ -299,16 +296,6 @@ const Dashboard: React.FC = () => {
                     onProfileComplete={() => setShowProfileModal(false)}
                 />
             )}
-
-            {/* Referral Modal */}
-            <ReferralModal
-                isOpen={isReferralModalOpen}
-                onClose={() => setIsReferralModalOpen(false)}
-                referralLink={generateReferralIdentifier(
-                    userProfile?.firstName,
-                    userProfile?.lastName
-                )}
-            />
 
             {/* Job Form Modal */}
             {showJobForm && (
