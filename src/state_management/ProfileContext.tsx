@@ -157,6 +157,20 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     }
 
     const payload = apiPayload as any;
+
+    // Coerce string fields to arrays when backend returns a comma/semicolon separated string
+    const toArray = (v: unknown): string[] => {
+      if (Array.isArray(v)) return v.filter(Boolean);
+      if (typeof v === "string") {
+        const trimmed = v.trim();
+        if (!trimmed) return [];
+        return trimmed
+          .split(/[;,]/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+      }
+      return [];
+    };
     const normalized: UserProfile = {
       userId: payload.userId || payload._id,
       firstName: payload.firstName || "",
@@ -172,11 +186,11 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       transcriptUrl: payload.transcriptUrl || "",
       visaStatus: payload.visaStatus || "Other",
       address: payload.address || "",
-      preferredRoles: Array.isArray(payload.preferredRoles) ? payload.preferredRoles : [],
+      preferredRoles: toArray(payload.preferredRoles),
       experienceLevel: payload.experienceLevel || "Entry level",
       expectedSalaryRange: payload.expectedSalaryRange || "60k-100k",
-      preferredLocations: Array.isArray(payload.preferredLocations) ? payload.preferredLocations : [],
-      targetCompanies: Array.isArray(payload.targetCompanies) ? payload.targetCompanies : [],
+      preferredLocations: toArray(payload.preferredLocations),
+      targetCompanies: toArray(payload.targetCompanies),
       reasonForLeaving: payload.reasonForLeaving || "",
       linkedinUrl: payload.linkedinUrl || "",
       githubUrl: payload.githubUrl || "",
