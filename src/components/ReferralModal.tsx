@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { X, Copy, Check, Crown, Briefcase } from "lucide-react";
 
 interface ReferralModalProps {
@@ -13,6 +14,21 @@ export default function ReferralModal({
     referralLink,
 }: ReferralModalProps) {
     const [copied, setCopied] = useState(false);
+    
+    // Centering/UX helpers
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", onKey);
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.removeEventListener("keydown", onKey);
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [isOpen, onClose]);
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(referralLink);
@@ -22,9 +38,24 @@ export default function ReferralModal({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    const modal = (
+        <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+            onClick={onClose}
+        >
+            {/* Scoped style to hide scrollbars only for this modal */}
+            <style>{`
+              .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+              .hide-scrollbar::-webkit-scrollbar { display: none; }
+            `}</style>
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+            {/* Card */}
+            <div
+                className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-2xl">
                     <button
@@ -113,4 +144,6 @@ export default function ReferralModal({
             </div>
         </div>
     );
+
+    return ReactDOM.createPortal(modal, document.body);
 }
