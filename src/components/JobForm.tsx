@@ -374,19 +374,25 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {isEditMode ? "Edit Job Application" : "Add New Job Application"}
-        </h3>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      
+      {/* Modal Card */}
+      <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {isEditMode ? "Edit Job Application" : "Add New Job Application"}
+            </h3>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
       {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
 
@@ -480,6 +486,8 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
           </button>
         </div>
       </form>
+        </div>
+      </div>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import {
     XCircle,
     Clock,
 } from "lucide-react";
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserJobs } from "../state_management/UserJobs.tsx";
 import { UserContext } from "../state_management/UserContext.js";
@@ -18,6 +18,8 @@ import { useOperationsStore } from "../state_management/Operations.ts";
 import ReferralModal from "./ReferralModal.tsx";
 import { generateReferralIdentifier } from "../utils/generateUsername.ts";
 import { useJobsSessionStore } from "../state_management/JobsSessionStore";
+
+const JobForm = lazy(() => import("./JobForm"));
 
 const Dashboard: React.FC = () => {
     const context = useContext(UserContext);
@@ -36,6 +38,7 @@ const Dashboard: React.FC = () => {
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showWelcome, setShowWelcome] = useState(false);
+    const [showJobForm, setShowJobForm] = useState(false);
     const { role } = useOperationsStore();
     
     // Use session storage for analytics
@@ -307,6 +310,24 @@ const Dashboard: React.FC = () => {
                 )}
             />
 
+            {/* Job Form Modal */}
+            {showJobForm && (
+                <Suspense fallback={<LoadingScreen />}>
+                    <JobForm
+                        job={null}
+                        onCancel={() => setShowJobForm(false)}
+                        onSuccess={() => {
+                            setShowJobForm(false);
+                            // Refresh jobs data
+                            if (token && userDetails) {
+                                FetchAllJobs(token, userDetails);
+                            }
+                        }}
+                        setUserJobs={setUserJobs}
+                    />
+                </Suspense>
+            )}
+
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Welcome Section */}
@@ -324,7 +345,10 @@ const Dashboard: React.FC = () => {
                     <div className="mb-8 rounded-xl border border-dashed border-gray-300 bg-white p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">You have no jobs yet</h3>
                         <p className="text-gray-600 mb-4">Start by adding your first job application to kick off tracking and insights.</p>
-                        <button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-all duration-200">
+                        <button 
+                            onClick={() => setShowJobForm(true)}
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-all duration-200"
+                        >
                             Add Your First Job
                         </button>
                     </div>
