@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Briefcase, FileText, User, LogOut, ChevronDown, Edit2Icon, Gift } from 'lucide-react';
+import { Home, Briefcase, FileText, User, LogOut, ChevronDown, Edit2Icon } from 'lucide-react';
 import { UserContext } from '../state_management/UserContext.tsx';
 import { useUserProfile } from "../state_management/ProfileContext";
 import { useOperationsStore } from "../state_management/Operations.ts";
-import ReferralModal from './ReferralModal';
-import { generateReferralIdentifier } from '../utils/generateUsername';
 import { toastUtils, toastMessages } from '../utils/toast';
 
 interface NavigationProps {
@@ -27,15 +25,11 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
   let userDetails = ctx?.userDetails;
   const [user, setUser] = useState(userDetails?.name || '');
   const [profileDropDown, setProfileDropDown] = useState(false);
-  const [isReferralOpen, setIsReferralOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { userProfile } = useUserProfile();
     const { role } = useOperationsStore();
   const hasProfile = !!userProfile?.email;
-  const referralIdentifier = generateReferralIdentifier(
-    userProfile?.firstName || (userDetails?.name?.split(' ')?.[0] || ''),
-    userProfile?.lastName || (userDetails?.name?.split(' ')?.slice(1).join(' ') || '')
-  );
+  
 
   const tabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -122,20 +116,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
               ))}
             </div>
             
-            {/* Refer & Earn Button */}
-            <div className="relative">
-              <button
-                className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all duration-200 shadow"
-                onClick={() => setIsReferralOpen(true)}
-              >
-                <Gift className="w-4 h-4" />
-                <span className="hidden sm:block">Refer & Earn</span>
-              </button>
-              {/* NEW Badge */}
-              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
-                NEW
-              </div>
-            </div>
+           
             
             {/* Enhanced User Profile Section */}
             {user ? (
@@ -255,12 +236,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
           </div>
         </div>
       </div>
-      {/* Referral Modal */}
-      <ReferralModal
-        isOpen={isReferralOpen}
-        onClose={() => setIsReferralOpen(false)}
-        referralLink={referralIdentifier}
-      />
+     
     </nav>
   );
 };
