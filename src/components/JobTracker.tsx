@@ -22,7 +22,7 @@ const JobTracker = () => {
   const { userJobs, setUserJobs } = useUserJobs();
   const { userDetails, token } = useContext(UserContext) || {};
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  const { updatingJobs, setJobUpdating, setPendingUpdate, clearPendingUpdate } = useJobsSessionStore();
+  const { clearPendingUpdate } = useJobsSessionStore();
 
   // near other useState hooks
 const [pendingMove, setPendingMove] = useState<{ jobID: string; status: JobStatus } | null>(null);
@@ -201,11 +201,46 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
   e.dataTransfer.setData('jobId', job.jobID);   // existing key some code may rely on
   // Optional: source status for future-proofing (not strictly needed)
   e.dataTransfer.setData('sourceStatus', job.currentStatus);
+  
+  // Enhanced visual feedback for drag start
+  const target = e.target as HTMLElement;
+  target.style.opacity = '0.8';
+  target.style.transform = 'rotate(8deg) scale(1.05)';
+  target.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+  target.style.zIndex = '1000';
+  target.style.transition = 'none'; // Disable transition during drag for instant feedback
+};
+
+const handleDragEnd = (e: React.DragEvent) => {
+  // Reset visual effects with smooth animation
+  const target = e.target as HTMLElement;
+  target.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; // Restore smooth transition
+  target.style.opacity = '1';
+  target.style.transform = 'none';
+  target.style.boxShadow = '';
+  target.style.zIndex = '';
 };
 
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
+        // Enhanced visual feedback for drop zones
+        const target = e.currentTarget as HTMLElement;
+        target.style.borderColor = '#3b82f6';
+        target.style.borderWidth = '3px';
+        target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        target.style.transform = 'scale(1.02)';
+        target.style.boxShadow = '0 10px 25px -5px rgba(59, 130, 246, 0.2)';
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        // Reset visual feedback when leaving drop zone
+        const target = e.currentTarget as HTMLElement;
+        target.style.borderColor = '';
+        target.style.borderWidth = '';
+        target.style.backgroundColor = '';
+        target.style.transform = '';
+        target.style.boxShadow = '';
     };
 
     const handleDragOverBoard = (e: React.DragEvent) => {
@@ -215,18 +250,29 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
 
         const { clientX } = e;
         const { left, right } = container.getBoundingClientRect();
-        const edgeSize = 120;
+        const edgeSize = 100; // Reduced for more responsive scrolling
 
-        if (clientX - left < edgeSize) {
-            const distance = clientX - left;
-            const intensity = (edgeSize - distance) / edgeSize;
-            const scrollSpeed = Math.max(20, intensity * 60);
-            container.scrollBy({ left: -scrollSpeed, behavior: "smooth" });
-        } else if (right - clientX < edgeSize) {
-            const distance = right - clientX;
-            const intensity = (edgeSize - distance) / edgeSize;
-            const scrollSpeed = Math.max(20, intensity * 60);
-            container.scrollBy({ left: scrollSpeed, behavior: "smooth" });
+        // Throttle scroll updates for better performance
+        const scrollContainer = container as any;
+        if (!scrollContainer._scrollTimeout) {
+            scrollContainer._scrollTimeout = true;
+            
+            if (clientX - left < edgeSize) {
+                const distance = clientX - left;
+                const intensity = Math.max(0.3, (edgeSize - distance) / edgeSize);
+                const scrollSpeed = intensity * 150; // Increased speed
+                container.scrollBy({ left: -scrollSpeed, behavior: "auto" }); // Changed to auto for instant scroll
+            } else if (right - clientX < edgeSize) {
+                const distance = right - clientX;
+                const intensity = Math.max(0.3, (edgeSize - distance) / edgeSize);
+                const scrollSpeed = intensity * 150; // Increased speed
+                container.scrollBy({ left: scrollSpeed, behavior: "auto" }); // Changed to auto for instant scroll
+            }
+            
+            // Reset throttle after 16ms (60fps)
+            setTimeout(() => {
+                scrollContainer._scrollTimeout = false;
+            }, 16);
         }
     };
 
@@ -298,19 +344,27 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
         if (!originalJob) return;
 
         const originalStatus = originalJob.currentStatus;
+        const statusSuffix = role === "operations" ? " by " + (name || "operations") : " by user";
+        const newStatus = status + statusSuffix;
 
-        // Mark job as updating
-        setJobUpdating(jobID, true);
+        // OPTIMISTIC UPDATE: Update UI immediately
+        setUserJobs((prevJobs) =>
+            prevJobs.map((j) =>
+                j.jobID === jobID 
+                    ? { 
+                        ...j, 
+                        currentStatus: newStatus,
+                        updatedAt: new Date().toLocaleString("en-IN")
+                    } 
+                    : j
+            )
+        );
 
         try {
             const endpoint =
                 role === "operations"
                     ? `${API_BASE_URL}/operations/jobs`
                     : `${API_BASE_URL}/updatechanges`;
-            const statusSuffix =
-                role === "operations"
-                    ? " by " + (name || "operations")
-                    : " by user";
 
             let reqToServer = await fetch(endpoint, {
                 method: "PUT",
@@ -319,7 +373,7 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                 },
                 body: JSON.stringify({
                     action: "UpdateStatus",
-                    status: status + statusSuffix,
+                    status: newStatus,
                     userDetails,
                     token: role !== "operations" ? token : undefined,
                     jobID,
@@ -328,41 +382,46 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
 
             let resFromServer = await reqToServer.json();
             if (resFromServer.message === "Jobs updated successfully") {
-                // Update session storage with server response
+                // Server confirmed - update with server data
                 setUserJobs(resFromServer?.updatedJobs);
-                // Clear pending update since server confirmed the change
                 clearPendingUpdate(jobID);
                 toastUtils.success("Job status updated successfully!");
                 console.log("Job status updated:", resFromServer?.updatedJobs);
             } else {
-                // Clear pending update and revert on failure
-                clearPendingUpdate(jobID);
+                // Server failed - revert to original state
                 setUserJobs((prevJobs) =>
                     prevJobs.map((j) =>
                         j.jobID === jobID ? { ...j, currentStatus: originalStatus } : j
                     )
                 );
+                clearPendingUpdate(jobID);
                 toastUtils.error("Failed to update job status");
                 console.error("Failed to update job status on server");
             }
         } catch (error) {
             console.error("Error updating job status:", error);
-            // Clear pending update and revert on network error
-            clearPendingUpdate(jobID);
+            // Network error - revert to original state
             setUserJobs((prevJobs) =>
                 prevJobs.map((j) =>
                     j.jobID === jobID ? { ...j, currentStatus: originalStatus } : j
                 )
             );
+            clearPendingUpdate(jobID);
             toastUtils.error("Network error while updating job status");
-        } finally {
-            // Clear updating state
-            setJobUpdating(jobID, false);
         }
     };
 
     const handleDrop = (e: React.DragEvent, status: JobStatus) => {
         e.preventDefault();
+        
+        // Reset visual feedback
+        const target = e.currentTarget as HTMLElement;
+        target.style.borderColor = '';
+        target.style.borderWidth = '';
+        target.style.backgroundColor = '';
+        target.style.transform = '';
+        target.style.boxShadow = '';
+        
         const jobID =
             e.dataTransfer.getData("jobID") || e.dataTransfer.getData("jobId");
         if (!jobID) return;
@@ -378,10 +437,7 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
     return;
   }
 
-  // Set pending update to show job in target column immediately
-  setPendingUpdate(jobID, job.currentStatus, status);
-
-  // Then update server in background
+  // INSTANT UPDATE: Move immediately in UI, then sync with server
   onUpdateJobStatus(jobID, status, userDetails);
 };
 
@@ -543,8 +599,9 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                         return (
                             <div
                                 key={status}
-                                className={`${color} rounded-xl p-4 min-w-[280px] w-80 flex flex-col shadow-sm border border-gray-200`}
+                                className={`${color} rounded-xl p-4 min-w-[280px] w-80 flex flex-col shadow-sm border border-gray-200 transition-all duration-200`}
                                 onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
                                 onDrop={(e) => handleDrop(e, status)}
                             >
                                 {/* Column Header */}
@@ -601,6 +658,7 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                                                     setShowJobModal={setShowJobModal}
                                                     setSelectedJob={setSelectedJob}
                                                     onDragStart={handleDragStart}
+                                                    onDragEnd={handleDragEnd}
                                                     onEdit={() =>
                                                         setEditingJob(job)
                                                     }
@@ -608,14 +666,6 @@ const handleDragStart = (e: React.DragEvent, job: Job) => {
                                                         onDeleteJob(job.jobID)
                                                     }
                                                 />
-                                                {updatingJobs.has(job.jobID) && (
-                                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-                                                        <div className="flex items-center space-x-2 text-blue-600">
-                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                                            <span className="text-sm font-medium">Updating...</span>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         ))}
                                     </Suspense>

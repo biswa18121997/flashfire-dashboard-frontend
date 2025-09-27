@@ -5,6 +5,7 @@ import { getTimeAgo } from '../utils/getTimeAgo';
 interface JobCardProps {
   job: Job;
   onDragStart: (e: React.DragEvent, job: Job) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
   onEdit: () => void;
   onDelete: () => void;
   showJobModal: boolean;
@@ -17,6 +18,7 @@ const JobCard: React.FC<JobCardProps> = ({
   setShowJobModal,
   job,
   onDragStart,
+  onDragEnd,
   onEdit,
   onDelete,
 }) => {
@@ -30,7 +32,8 @@ const JobCard: React.FC<JobCardProps> = ({
       onClick={handleClick}
       draggable
       onDragStart={(e) => onDragStart(e, job)}
-      className="bg-white rounded-lg border w-full border-gray-200 p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-move"
+      onDragEnd={onDragEnd}
+      className="bg-white rounded-lg border w-full border-gray-200 p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-move hover:scale-[1.02] hover:-rotate-1"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
