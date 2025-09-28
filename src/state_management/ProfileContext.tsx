@@ -207,6 +207,8 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       expectedSalaryNarrative: payload.expectedSalaryNarrative || "",
       availabilityNote: payload.availabilityNote || "in 2 weeks.",
       references: payload.references || "",
+      dashboardManager: payload.dashboardManager || "",
+      dashboardManagerContact: payload.dashboardManagerContact || "",
     };
 
     setProfile(normalized);
