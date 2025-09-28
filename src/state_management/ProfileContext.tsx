@@ -68,6 +68,7 @@ export interface UserProfile {
   expectedSalaryNarrative?: string;
   availabilityNote?: string;
   joinTime?: string;
+  references?: string;
 }
 
 /**
@@ -205,6 +206,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       ssnNumber: payload.ssnNumber || "",
       expectedSalaryNarrative: payload.expectedSalaryNarrative || "",
       availabilityNote: payload.availabilityNote || "in 2 weeks.",
+      references: payload.references || "",
     };
 
     setProfile(normalized);
