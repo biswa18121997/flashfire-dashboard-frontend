@@ -444,9 +444,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
                                     </div>
                                   )}
                                 </div>
-                                <div className="p-2 bg-green-50 border border-green-200 rounded-md">
-                                  
-                                </div>
+                            
                               </div>
                             )}
                           </div>
