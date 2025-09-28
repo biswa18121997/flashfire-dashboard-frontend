@@ -42,6 +42,16 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
     dashboardManager: "",
     dashboardManagerContact: "",
   });
+
+  // Sync dashboard manager data when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setDashboardManagerData({
+        dashboardManager: userProfile.dashboardManager || "",
+        dashboardManagerContact: userProfile.dashboardManagerContact || "",
+      });
+    }
+  }, [userProfile]);
   
 
   const tabs: TabItem[] = [
@@ -489,3 +499,6 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
 };
 
 export default Navigation;
+
+
+
