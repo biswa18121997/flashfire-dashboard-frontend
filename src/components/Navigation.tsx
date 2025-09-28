@@ -445,9 +445,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
                                   )}
                                 </div>
                                 <div className="p-2 bg-green-50 border border-green-200 rounded-md">
-                                  <p className="text-xs text-green-700">
-                                    Provide your assigned dashboard manager's contact information for support.
-                                  </p>
+                                  
                                 </div>
                               </div>
                             )}
