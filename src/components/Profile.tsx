@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useContext, useEffect } from "react";
-import { Pencil, Link as LinkIcon, FileText, CreditCard, GraduationCap, Building2, Save, X, ArrowLeft, Upload } from "lucide-react";
+import { Pencil, Link as LinkIcon, FileText, CreditCard, GraduationCap, Building2, Save, X, ArrowLeft, Copy, Check } from "lucide-react";
 import { useUserProfile, UserProfile } from "../state_management/ProfileContext";
 import { UserContext } from "../state_management/UserContext";
 import { Link } from "react-router-dom";
@@ -33,6 +33,54 @@ function Placeholder({ label }: { label?: string }) {
   return <span className="text-gray-400 italic">{label || "Not provided"}</span>;
 }
 
+function CopyButton({ value, title }: { value: string | React.ReactNode; title: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      let textToCopy = "";
+      
+      if (typeof value === "string") {
+        textToCopy = value;
+      } else if (value && typeof value === "object" && "props" in value) {
+        // Handle React elements (like links)
+        if (value.props && value.props.children) {
+          textToCopy = String(value.props.children);
+        }
+      } else {
+        textToCopy = String(value);
+      }
+
+      if (textToCopy && textToCopy.trim()) {
+        await navigator.clipboard.writeText(textToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toastUtils.success(`${title} copied to clipboard!`);
+      }
+    } catch (error) {
+      toastUtils.error("Failed to copy to clipboard");
+    }
+  };
+
+  if (!value || (typeof value === "string" && !value.trim())) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+      title={`Copy ${title.toLowerCase()}`}
+    >
+      {copied ? (
+        <Check size={14} className="text-green-600" />
+      ) : (
+        <Copy size={14} />
+      )}
+    </button>
+  );
+}
+
 function InfoRow({ 
   title, 
   value, 
@@ -57,8 +105,11 @@ function InfoRow({
             placeholder={`Enter ${title.toLowerCase()}`}
           />
         ) : (
-          <div className="text-sm text-gray-900">
-            {value ? value : <Placeholder />}
+          <div className="flex items-center text-sm text-gray-900">
+            <span className="flex-1">
+              {value ? value : <Placeholder />}
+            </span>
+            <CopyButton value={value || ""} title={title} />
           </div>
         )}
       </div>
@@ -90,8 +141,11 @@ function TextAreaRow({
             placeholder={`Enter ${title.toLowerCase()}`}
           />
         ) : (
-          <div className="text-sm text-gray-900 truncate">
-            {value ? value : <Placeholder />}
+          <div className="flex items-start text-sm text-gray-900">
+            <div className="flex-1 whitespace-pre-wrap">
+              {value ? value : <Placeholder />}
+            </div>
+            <CopyButton value={value || ""} title={title} />
           </div>
         )}
       </div>
@@ -198,14 +252,15 @@ function FileUploadRow({
             )}
           </div>
         ) : (
-          <div>
+          <div className="flex items-center">
             {currentFile ? (
-              <a className="text-blue-600 underline text-sm" href={currentFile} target="_blank" rel="noreferrer">
+              <a className="text-blue-600 underline text-sm flex items-center" href={currentFile} target="_blank" rel="noreferrer">
                 View File
               </a>
             ) : (
               <span className="text-gray-400 italic text-sm">No file uploaded</span>
             )}
+            {currentFile && <CopyButton value={currentFile} title={title} />}
           </div>
         )}
       </div>
@@ -334,7 +389,7 @@ export default function ProfilePage({
         throw new Error(errorData.message || "Failed to update profile");
       }
 
-      const resJson = await res.json();
+      await res.json();
       updateProfile(editData);
       setEditingSection(null);
       setEditData({});
@@ -610,7 +665,7 @@ export default function ProfilePage({
                                   onValueChange={(value) =>
                                       setEditData((prev) => ({
                                           ...prev,
-                                          visaStatus: value,
+                                          visaStatus: value as any,
                                       }))
                                   }
                               />
@@ -735,15 +790,18 @@ export default function ProfilePage({
                                           Transcript
                                       </div>
                                       <div className="w-2/3">
-                                          <a
-                                              href={data.transcriptUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-2"
-                                          >
-                                              <FileText className="w-4 h-4" />
-                                              View Transcript
-                                          </a>
+                                          <div className="flex items-center">
+                                              <a
+                                                  href={data.transcriptUrl}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-2"
+                                              >
+                                                  <FileText className="w-4 h-4" />
+                                                  View Transcript
+                                              </a>
+                                              <CopyButton value={data.transcriptUrl} title="Transcript URL" />
+                                          </div>
                                       </div>
                                   </div>
                               )}
@@ -786,7 +844,7 @@ export default function ProfilePage({
                                   onValueChange={(value) =>
                                       setEditData((prev) => ({
                                           ...prev,
-                                          experienceLevel: value,
+                                          experienceLevel: value as any,
                                       }))
                                   }
                               />
@@ -801,7 +859,7 @@ export default function ProfilePage({
                                   onValueChange={(value) =>
                                       setEditData((prev) => ({
                                           ...prev,
-                                          expectedSalaryRange: value,
+                                          expectedSalaryRange: value as any,
                                       }))
                                   }
                               />
