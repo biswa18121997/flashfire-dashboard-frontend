@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: "preferences", label: "Preferences", icon: FileText },
   { key: "links", label: "Links & Docs", icon: LinkIcon },
   { key: "compliance", label: "Terms & Accuracy", icon: FileText },
+  { key: "references", label: "References", icon: FileText },
   { key: "additional", label: "Additional Information", icon: FileText },
   { key: "credentials", label: "Account Access", icon: FileText },
 ] as const;
@@ -1086,6 +1087,45 @@ export default function ProfilePage({
                                       }))
                                   }
                               />
+                          </Card>
+                      )}
+
+                      {!emptyState && active === "references" && (
+                          <Card
+                              title="References"
+                              onEdit={() => handleEditClick("references")}
+                              isEditing={editingSection === "references"}
+                              onSave={handleSave}
+                              onCancel={handleCancel}
+                          >
+                              <TextAreaRow
+                                  title="References"
+                                  value={
+                                      editingSection === "references"
+                                          ? editData.references
+                                          : data.references
+                                  }
+                                  isEditing={editingSection === "references"}
+                                  onValueChange={(value) =>
+                                      setEditData((prev) => ({
+                                          ...prev,
+                                          references: value,
+                                      }))
+                                  }
+                              />
+                              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                      <span className="text-sm font-semibold text-blue-800">
+                                          Reference Guidelines
+                                      </span>
+                                  </div>
+                                  <p className="text-sm text-blue-700">
+                                      Provide professional references including their name, title, company, 
+                                      contact information, and relationship to you. You can format as paragraphs 
+                                      or use comma-separated format. Include 2-3 professional references.
+                                  </p>
+                              </div>
                           </Card>
                       )}
 
