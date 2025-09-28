@@ -489,6 +489,3 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange, setUser
 };
 
 export default Navigation;
-
-
-
