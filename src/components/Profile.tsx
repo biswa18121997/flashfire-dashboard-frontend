@@ -356,6 +356,13 @@ export default function ProfilePage({
     setActive(section);
   };
 
+  const handleSectionHover = (section: SectionKey) => {
+    if (editingSection !== null) {
+      return; // Don't change section if editing
+    }
+    setActive(section);
+  };
+
   const handleSave = async () => {
     try {
       // Require hardcoded key for saving
@@ -540,6 +547,7 @@ export default function ProfilePage({
                               return (
                                   <button
                                       key={key}
+                                      onMouseEnter={() => handleSectionHover(key)}
                                       onClick={() => handleSectionChange(key)}
                                       disabled={editingSection !== null}
                                       className={[
