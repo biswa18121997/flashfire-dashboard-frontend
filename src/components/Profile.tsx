@@ -416,6 +416,20 @@ export default function ProfilePage({
   const [open, setOpen] = useState(false);
   const [emailOfOperations, setEmailOfOperations] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [password, setPassword] = useState("");
+
+  const handlePasswordSubmit = () => {
+    if (password === "flashfire2025") {
+      setShowPasswordModal(false);
+      setOpen(true);
+      setPassword("");
+    } else {
+      toastUtils.error("Incorrect password. Access denied.");
+      setPassword("");
+    }
+  };
+
    const handleAddMember = async () => {
       const operatorEmail = emailOfOperations.trim();
       if (!operatorEmail || !operatorEmail.includes("@")) {
@@ -1308,13 +1322,52 @@ export default function ProfilePage({
               <div className="fixed bottom-6 right-6">
                   {/* Floating Button */}
                   <button
-                      onClick={() => setOpen(true)}
+                      onClick={() => setShowPasswordModal(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-lg px-6 py-3 transition"
                   >
                       Add Team Member
                   </button>
 
-                  {/* Modal */}
+                  {/* Password Modal */}
+                  {showPasswordModal && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+                              <h2 className="text-xl font-semibold mb-4">
+                                  Enter Access Key
+                              </h2>
+                              <p className="text-gray-600 mb-4">
+                                  Please enter the access key to add team members.
+                              </p>
+                              <input
+                                  type="password"
+                                  placeholder="Enter access key"
+                                  value={password}
+                                  onChange={(e) => setPassword(e.target.value)}
+                                  onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                                  className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                              />
+                              <div className="flex justify-end gap-3">
+                                  <button
+                                      onClick={() => {
+                                          setShowPasswordModal(false);
+                                          setPassword("");
+                                      }}
+                                      className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                                  >
+                                      Cancel
+                                  </button>
+                                  <button
+                                      onClick={handlePasswordSubmit}
+                                      className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                                  >
+                                      Submit
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* Team Member Modal */}
                   {open && (
                       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
