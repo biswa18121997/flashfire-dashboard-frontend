@@ -394,9 +394,9 @@ export default function ProfilePage() {
                 </Card>
 
                 {/* Preferences */}
-                <Card title="Preferences">
+                {/* <Card title="Preferences">
                     <p className="text-sm text-gray-600">Use this section for any future preference fields.</p>
-                </Card>
+                </Card> */}
 
                 {/* Links */}
                 <Card title="Links & Documents">
