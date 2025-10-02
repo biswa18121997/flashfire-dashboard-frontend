@@ -1,66 +1,46 @@
 import React, { useMemo, useState, useContext } from "react";
-import {
-    Pencil,
-    Save,
-    X,
-    ArrowLeft,
-    Copy,
-    Check,
-} from "lucide-react";
+import { Pencil, Save, X, ArrowLeft, Copy, Check } from "lucide-react";
 import { useUserProfile, UserProfile } from "../state_management/ProfileContext";
 import { UserContext } from "../state_management/UserContext";
 import { Link } from "react-router-dom";
 import { toastUtils, toastMessages } from "../utils/toast";
 
 /* ---------------- Helper Components ----------------- */
-
 function Placeholder({ label }: { label?: string }) {
     return <span className="text-gray-400 italic">{label || "Not provided"}</span>;
 }
 
-/* Copy button */
-function CopyButton({ value, title }: { value: string | React.ReactNode; title: string }) {
+function CopyButton({ value, title }: { value: string; title: string }) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
         try {
-            let textToCopy = "";
-
-            if (typeof value === "string") {
-                textToCopy = value;
-            } else if (value && typeof value === "object" && "props" in value) {
-                if (value.props && value.props.children) {
-                    textToCopy = String(value.props.children);
-                }
-            } else {
-                textToCopy = String(value);
-            }
-
-            if (textToCopy && textToCopy.trim()) {
-                await navigator.clipboard.writeText(textToCopy);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-                toastUtils.success(`${title} copied to clipboard!`);
-            }
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            toastUtils.success(`${title} copied to clipboard!`);
+            setTimeout(() => setCopied(false), 2000);
         } catch {
-            toastUtils.error("Failed to copy to clipboard");
+            toastUtils.error("Failed to copy");
         }
     };
 
-    if (!value || (typeof value === "string" && !value.trim())) return null;
+    if (!value || !value.trim()) return null;
 
     return (
         <button
             onClick={handleCopy}
-            className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-            title={`Copy ${title.toLowerCase()}`}
+            className="ml-2 p-1 rounded hover:bg-gray-100 transition-colors"
+            title={`Copy ${title}`}
         >
-            {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+            {copied ? (
+                <Check size={16} className="text-green-600" />
+            ) : (
+                <Copy size={16} className="text-gray-500" />
+            )}
         </button>
     );
 }
 
-/* Row components */
 function InfoRow({
     title,
     value,
@@ -68,27 +48,27 @@ function InfoRow({
     onValueChange = () => { },
 }: {
     title: string;
-    value?: string | React.ReactNode;
+    value?: string;
     isEditing?: boolean;
     onValueChange?: (value: string) => void;
 }) {
     return (
-        <div className="flex items-center py-4 border-b border-gray-100 last:border-b-0">
+        <div className="flex items-center py-3 border-b border-gray-100 last:border-b-0">
             <div className="w-1/3 text-sm font-semibold text-gray-700">{title}</div>
-            <div className="w-2/3">
+            <div className="w-2/3 flex items-center">
                 {isEditing ? (
                     <input
                         type="text"
-                        value={(value as string) || ""}
+                        value={value || ""}
                         onChange={(e) => onValueChange(e.target.value)}
                         className="w-full text-sm border-b border-gray-300 px-2 py-1 focus:border-blue-500 focus:outline-none"
                         placeholder={`Enter ${title.toLowerCase()}`}
                     />
                 ) : (
-                    <div className="flex items-center text-sm text-gray-900">
-                        <span className="flex-1">{value ? value : <Placeholder />}</span>
-                        <CopyButton value={value || ""} title={title} />
-                    </div>
+                    <>
+                        <span className="flex-1 text-sm text-gray-900">{value || <Placeholder />}</span>
+                        {value && <CopyButton value={value} title={title} />}
+                    </>
                 )}
             </div>
         </div>
@@ -107,9 +87,9 @@ function TextAreaRow({
     onValueChange?: (value: string) => void;
 }) {
     return (
-        <div className="flex items-start py-4 border-b border-gray-100 last:border-b-0">
+        <div className="flex items-start py-3 border-b border-gray-100 last:border-b-0">
             <div className="w-1/3 text-sm font-semibold text-gray-700 pt-2">{title}</div>
-            <div className="w-2/3">
+            <div className="w-2/3 flex items-center">
                 {isEditing ? (
                     <textarea
                         value={value || ""}
@@ -119,10 +99,10 @@ function TextAreaRow({
                         placeholder={`Enter ${title.toLowerCase()}`}
                     />
                 ) : (
-                    <div className="flex items-center text-sm text-gray-900">
-                        <span className="flex-1">{value ? value : <Placeholder />}</span>
-                        <CopyButton value={value || ""} title={title} />
-                    </div>
+                    <>
+                        <span className="flex-1 text-sm text-gray-900">{value || <Placeholder />}</span>
+                        {value && <CopyButton value={value} title={title} />}
+                    </>
                 )}
             </div>
         </div>
@@ -141,7 +121,7 @@ function FileUploadRow({
     onFileChange?: (file: string) => void;
 }) {
     return (
-        <div className="flex items-start py-4 border-b border-gray-100 last:border-b-0">
+        <div className="flex items-start py-3 border-b border-gray-100 last:border-b-0">
             <div className="w-1/3 text-sm font-semibold text-gray-700 pt-2">{title}</div>
             <div className="w-2/3 flex items-center">
                 {isEditing ? (
@@ -167,14 +147,13 @@ function FileUploadRow({
                         <CopyButton value={currentFile} title={title} />
                     </>
                 ) : (
-                    <span className="text-gray-400 italic text-sm">No file uploaded</span>
+                    <Placeholder label="No file uploaded" />
                 )}
             </div>
         </div>
     );
 }
 
-/* Card wrapper */
 function Card({
     children,
     title,
@@ -192,19 +171,19 @@ function Card({
 }) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">{title}</h3>
                 {isEditing ? (
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onSave}
-                            className="inline-flex items-center gap-2 bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 rounded-lg transition-colors"
+                            className="inline-flex items-center gap-2 bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 rounded-lg"
                         >
-                            <Save size={16} /> Save Changes
+                            <Save size={16} /> Save
                         </button>
                         <button
                             onClick={onCancel}
-                            className="inline-flex items-center gap-2 border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                            className="inline-flex items-center gap-2 border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg"
                         >
                             <X size={16} /> Cancel
                         </button>
@@ -213,7 +192,7 @@ function Card({
                     onEdit && (
                         <button
                             onClick={onEdit}
-                            className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 rounded-lg transition-opacity"
+                            className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-rose-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 rounded-lg"
                         >
                             <Pencil size={16} /> Edit
                         </button>
@@ -231,7 +210,6 @@ function joinArr(v?: string[] | null) {
 }
 
 /* ---------------- Main Page ----------------- */
-
 export default function ProfilePage() {
     const { userProfile, updateProfile } = useUserProfile();
     const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -257,10 +235,6 @@ export default function ProfilePage() {
             const token = ctx?.token;
             const email = ctx?.userDetails?.email;
 
-            if (!token || !email) {
-                throw new Error("Token or user details missing");
-            }
-
             const res = await fetch(`${API_BASE_URL}/setprofile`, {
                 method: "POST",
                 headers: {
@@ -275,18 +249,14 @@ export default function ProfilePage() {
                 }),
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || "Failed to update profile");
-            }
+            if (!res.ok) throw new Error("Failed to update profile");
 
             await res.json();
             updateProfile(editData);
             setEditingSection(null);
             setEditData({});
             toastUtils.success(toastMessages.profileUpdated);
-        } catch (error: any) {
-            console.error("Profile update error:", error);
+        } catch {
             toastUtils.error(toastMessages.profileError);
         }
     };
@@ -318,31 +288,35 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="mx-auto max-w-7xl px-4 py-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-col gap-3">
-                            <Link
-                                to="/"
-                                className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-gray-700 hover:bg-gray-200 transition-all duration-200"
-                            >
-                                <ArrowLeft size={16} />
-                                <span className="text-sm font-medium">Back to Dashboard</span>
-                            </Link>
-                            <div>
-                                <p className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
-                                    Professional Profile
-                                </p>
-                                <h1 className="mt-2 text-3xl font-bold text-gray-900">
-                                    {fullName}
-                                </h1>
-                            </div>
-                        </div>
+            <div className="bg-gradient-to-r from-orange-500 to-rose-500 shadow-md">
+                <div className="mx-auto max-w-7xl px-3 py-6 flex items-center ">
+
+                    {/* Back button */}
+                    <Link
+                        to="/"
+                        className="flex items-center gap-2 rounded-lg bg-white/20 backdrop-blur-sm px-4 py-2 text-white hover:bg-white/30 transition-all duration-200"
+                    >
+                        <ArrowLeft size={16} />
+                        <span className="text-sm font-medium">Back to Dashboard</span>
+                    </Link>
+
+                    {/* Profile title block */}
+                    <div className="text-center ml-24">
+                        <p className="text-xs uppercase tracking-wider text-white/80 font-semibold">
+                            Professional Profile
+                        </p>
+                        <h1 className="mt-1 text-3xl font-extrabold text-white drop-shadow-md">
+                            {fullName}
+                        </h1>
                     </div>
+
+
                 </div>
             </div>
 
-            {/* All sections stacked + scrollable */}
+
+
+            {/* Sections */}
             <div className="mx-auto max-w-5xl px-6 py-12 space-y-10 overflow-y-auto">
 
                 {/* Personal */}
@@ -353,12 +327,42 @@ export default function ProfilePage() {
                     onSave={handleSave}
                     onCancel={handleCancel}
                 >
-                    <InfoRow title="First Name" value={data.firstName} />
-                    <InfoRow title="Last Name" value={data.lastName} />
-                    <InfoRow title="Contact Number" value={data.contactNumber} />
-                    <InfoRow title="Date of Birth" value={data.dob} />
-                    <TextAreaRow title="Address" value={data.address} />
-                    <InfoRow title="Visa Status" value={data.visaStatus} />
+                    <InfoRow
+                        title="First Name"
+                        value={editingSection === "personal" ? editData.firstName : data.firstName}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, firstName: v })}
+                    />
+                    <InfoRow
+                        title="Last Name"
+                        value={editingSection === "personal" ? editData.lastName : data.lastName}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, lastName: v })}
+                    />
+                    <InfoRow
+                        title="Contact Number"
+                        value={editingSection === "personal" ? editData.contactNumber : data.contactNumber}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, contactNumber: v })}
+                    />
+                    <InfoRow
+                        title="Date of Birth"
+                        value={editingSection === "personal" ? editData.dob : data.dob}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, dob: v })}
+                    />
+                    <TextAreaRow
+                        title="Address"
+                        value={editingSection === "personal" ? editData.address : data.address}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, address: v })}
+                    />
+                    <InfoRow
+                        title="Visa Status"
+                        value={editingSection === "personal" ? editData.visaStatus : data.visaStatus}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, visaStatus: v })}
+                    />
                 </Card>
 
                 {/* Education */}
@@ -369,12 +373,42 @@ export default function ProfilePage() {
                     onSave={handleSave}
                     onCancel={handleCancel}
                 >
-                    <InfoRow title="Bachelor's (University • Degree • Duration)" value={data.bachelorsUniDegree} />
-                    <InfoRow title="Bachelor's Grad (MM-YYYY)" value={data.bachelorsGradMonthYear} />
-                    <InfoRow title="Bachelor's GPA" value={data.bachelorsGPA} />
-                    <InfoRow title="Master's (University • Degree • Duration)" value={data.mastersUniDegree} />
-                    <InfoRow title="Master's Grad (MM-YYYY)" value={data.mastersGradMonthYear} />
-                    <InfoRow title="Master's GPA" value={data.mastersGPA} />
+                    <InfoRow
+                        title="Bachelor's (University • Degree • Duration)"
+                        value={editingSection === "education" ? editData.bachelorsUniDegree : data.bachelorsUniDegree}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, bachelorsUniDegree: v })}
+                    />
+                    <InfoRow
+                        title="Bachelor's Grad (MM-YYYY)"
+                        value={editingSection === "education" ? editData.bachelorsGradMonthYear : data.bachelorsGradMonthYear}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, bachelorsGradMonthYear: v })}
+                    />
+                    <InfoRow
+                        title="Bachelor's GPA"
+                        value={editingSection === "education" ? editData.bachelorsGPA : data.bachelorsGPA}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, bachelorsGPA: v })}
+                    />
+                    <InfoRow
+                        title="Master's (University • Degree • Duration)"
+                        value={editingSection === "education" ? editData.mastersUniDegree : data.mastersUniDegree}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, mastersUniDegree: v })}
+                    />
+                    <InfoRow
+                        title="Master's Grad (MM-YYYY)"
+                        value={editingSection === "education" ? editData.mastersGradMonthYear : data.mastersGradMonthYear}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, mastersGradMonthYear: v })}
+                    />
+                    <InfoRow
+                        title="Master's GPA"
+                        value={editingSection === "education" ? editData.mastersGPA : data.mastersGPA}
+                        isEditing={editingSection === "education"}
+                        onValueChange={(v) => setEditData({ ...editData, mastersGPA: v })}
+                    />
                 </Card>
 
                 {/* Professional */}
@@ -385,12 +419,42 @@ export default function ProfilePage() {
                     onSave={handleSave}
                     onCancel={handleCancel}
                 >
-                    <InfoRow title="Preferred Roles" value={joinArr(data.preferredRoles)} />
-                    <InfoRow title="Experience Level" value={data.experienceLevel} />
-                    <InfoRow title="Expected Base Salary" value={data.expectedSalaryRange} />
-                    <InfoRow title="Preferred Locations" value={joinArr(data.preferredLocations)} />
-                    <InfoRow title="Target Companies" value={joinArr(data.targetCompanies)} />
-                    <TextAreaRow title="Reason for Leaving" value={data.reasonForLeaving} />
+                    <InfoRow
+                        title="Preferred Roles"
+                        value={editingSection === "professional" ? joinArr(editData.preferredRoles) : joinArr(data.preferredRoles)}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, preferredRoles: v.split(",") })}
+                    />
+                    <InfoRow
+                        title="Experience Level"
+                        value={editingSection === "professional" ? editData.experienceLevel : data.experienceLevel}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, experienceLevel: v })}
+                    />
+                    <InfoRow
+                        title="Expected Base Salary"
+                        value={editingSection === "professional" ? editData.expectedSalaryRange : data.expectedSalaryRange}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, expectedSalaryRange: v })}
+                    />
+                    <InfoRow
+                        title="Preferred Locations"
+                        value={editingSection === "professional" ? joinArr(editData.preferredLocations) : joinArr(data.preferredLocations)}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, preferredLocations: v.split(",") })}
+                    />
+                    <InfoRow
+                        title="Target Companies"
+                        value={editingSection === "professional" ? joinArr(editData.targetCompanies) : joinArr(data.targetCompanies)}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, targetCompanies: v.split(",") })}
+                    />
+                    <TextAreaRow
+                        title="Reason for Leaving"
+                        value={editingSection === "professional" ? editData.reasonForLeaving : data.reasonForLeaving}
+                        isEditing={editingSection === "professional"}
+                        onValueChange={(v) => setEditData({ ...editData, reasonForLeaving: v })}
+                    />
                 </Card>
 
                 {/* Preferences */}
@@ -399,22 +463,85 @@ export default function ProfilePage() {
                 </Card> */}
 
                 {/* Links */}
-                <Card title="Links & Documents">
-                    <InfoRow title="LinkedIn" value={data.linkedinUrl} />
-                    <InfoRow title="GitHub" value={data.githubUrl} />
-                    <InfoRow title="Portfolio" value={data.portfolioUrl} />
-                    <FileUploadRow title="Resume" currentFile={data.resumeUrl} />
-                    <FileUploadRow title="Cover Letter" currentFile={data.coverLetterUrl} />
-                    <FileUploadRow title="Portfolio File" currentFile={data.portfolioFileUrl} />
+                <Card
+                    title="Links & Documents"
+                    onEdit={() => handleEditClick("links")}
+                    isEditing={editingSection === "links"}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                >
+                    <InfoRow
+                        title="LinkedIn"
+                        value={editingSection === "links" ? editData.linkedinUrl : data.linkedinUrl}
+                        isEditing={editingSection === "links"}
+                        onValueChange={(v) => setEditData({ ...editData, linkedinUrl: v })}
+                    />
+                    <InfoRow
+                        title="GitHub"
+                        value={editingSection === "links" ? editData.githubUrl : data.githubUrl}
+                        isEditing={editingSection === "links"}
+                        onValueChange={(v) => setEditData({ ...editData, githubUrl: v })}
+                    />
+                    <InfoRow
+                        title="Portfolio"
+                        value={editingSection === "links" ? editData.portfolioUrl : data.portfolioUrl}
+                        isEditing={editingSection === "links"}
+                        onValueChange={(v) => setEditData({ ...editData, portfolioUrl: v })}
+                    />
+                    <FileUploadRow
+                        title="Resume"
+                        currentFile={editingSection === "links" ? editData.resumeUrl : data.resumeUrl}
+                        isEditing={editingSection === "links"}
+                        onFileChange={(v) => setEditData({ ...editData, resumeUrl: v })}
+                    />
+                    <FileUploadRow
+                        title="Cover Letter"
+                        currentFile={editingSection === "links" ? editData.coverLetterUrl : data.coverLetterUrl}
+                        isEditing={editingSection === "links"}
+                        onFileChange={(v) => setEditData({ ...editData, coverLetterUrl: v })}
+                    />
+                    <FileUploadRow
+                        title="Portfolio File"
+                        currentFile={editingSection === "links" ? editData.portfolioFileUrl : data.portfolioFileUrl}
+                        isEditing={editingSection === "links"}
+                        onFileChange={(v) => setEditData({ ...editData, portfolioFileUrl: v })}
+                    />
                 </Card>
 
                 {/* Compliance */}
-                <Card title="Terms & Accuracy">
-                    <InfoRow title="SSN Number" value={data.ssnNumber} />
-                    <TextAreaRow title="Expected Salary Narrative" value={data.expectedSalaryNarrative} />
-                    <InfoRow title="Join Time" value={data.joinTime} />
-                    <InfoRow title="Confirm Accuracy" value={data.confirmAccuracy ? "Yes" : "No"} />
-                    <InfoRow title="Agree to Terms" value={data.agreeTos ? "Yes" : "No"} />
+                <Card
+                    title="Terms & Accuracy"
+                    onEdit={() => handleEditClick("compliance")}
+                    isEditing={editingSection === "compliance"}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                >
+                    <InfoRow
+                        title="SSN Number"
+                        value={editingSection === "compliance" ? editData.ssnNumber : data.ssnNumber}
+                        isEditing={editingSection === "compliance"}
+                        onValueChange={(v) => setEditData({ ...editData, ssnNumber: v })}
+                    />
+                    <TextAreaRow
+                        title="Expected Salary Narrative"
+                        value={editingSection === "compliance" ? editData.expectedSalaryNarrative : data.expectedSalaryNarrative}
+                        isEditing={editingSection === "compliance"}
+                        onValueChange={(v) => setEditData({ ...editData, expectedSalaryNarrative: v })}
+                    />
+                    <InfoRow
+                        title="Join Time"
+                        value={editingSection === "compliance" ? editData.joinTime : data.joinTime}
+                        isEditing={editingSection === "compliance"}
+                        onValueChange={(v) => setEditData({ ...editData, joinTime: v })}
+                    />
+                    <InfoRow
+                        title="Confirm Accuracy"
+                        value={data.confirmAccuracy ? "Yes" : "No"}
+                    />
+                    <InfoRow
+                        title="Agree to Terms"
+                        value={data.agreeTos ? "Yes" : "No"}
+                    />
                 </Card>
 
                 {/* Additional */}
@@ -471,8 +598,14 @@ export default function ProfilePage() {
                             These are the credentials which you can use while applying in different portals.
                         </p>
                     </div>
-                    <InfoRow title="Username / Email" value={ctx?.userDetails?.email || "Not available"} />
-                    <InfoRow title="Password" value="Flashfire@1357" />
+                    <InfoRow
+                        title="Username / Email"
+                        value={ctx?.userDetails?.email || "Not available"}
+                    />
+                    <InfoRow
+                        title="Password"
+                        value="Flashfire@1357"
+                    />
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Important Notes:</h4>
                         <ul className="text-sm text-gray-600 space-y-1">
