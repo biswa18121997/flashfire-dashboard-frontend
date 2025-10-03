@@ -31,6 +31,8 @@ async function persistAttachmentsToJobPUT({
                 jobID,
                 userDetails,
                 attachmentUrls: urls, // backend uses $addToSet $each
+                role: "operations",
+                operationsName: operationsName || "operations"
             }),
         });
         const json = await res.json().catch(() => ({}));
@@ -121,6 +123,7 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const role = useOperationsStore((state) => state.role);
+  const operationsName = useOperationsStore((state) => state.name);
 
   // preload form if editing
   useEffect(() => {

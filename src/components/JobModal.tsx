@@ -96,6 +96,7 @@ async function persistAttachmentsToJob({
             userDetails: { email: userEmail, name: operationsUserName || userEmail },
             attachmentUrls: urls,
             role: role,
+            operationsName: operationsUserName || "operations"
         };
 
         const res = await fetch(`${API_BASE}/operations/jobs`, {
@@ -113,7 +114,7 @@ async function persistAttachmentsToJob({
         const payload = {
             action: "edit",
             jobID,
-            userDetails: { email: userEmail, name: role === "operations" ? operationsUserName : (userDetails?.name || userEmail) },
+            userDetails: { email: userEmail, name: userDetails?.name || userEmail },
             attachmentUrls: urls,
             token,
             role: role,
