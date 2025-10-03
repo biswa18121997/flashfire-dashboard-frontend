@@ -3,7 +3,6 @@ export function getTimeAgo(dateString: string): string {
 
   try {
     // Handle ISO strings or any format that Date can parse reliably first
-    // e.g., 2025-08-29T09:28:31.920Z or 2025-08-29T09:28:31
     if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateString)) {
       const iso = new Date(dateString);
       if (!Number.isNaN(iso.getTime())) {
@@ -13,7 +12,6 @@ export function getTimeAgo(dateString: string): string {
 
     const parts = dateString.trim().split(",");
     if (parts.length !== 2) {
-      // Last resort: try native Date parser
       const native = new Date(dateString);
       if (!Number.isNaN(native.getTime())) return formatFromDate(native);
       return "N/A";
@@ -28,30 +26,25 @@ export function getTimeAgo(dateString: string): string {
 
     const t = to24HourParts(timePart);
     if (!t) return "N/A";
-
-    // Try MM/DD first when unambiguous, otherwise try both and pick the past one
-    const makeDate = (mm: number, dd: number) => new Date(y, mm - 1, dd, t.h, t.m, t.s || 0);
+    
     const now = new Date();
+    const candidates = [
+      new Date(y, a - 1, b, t.h, t.m, t.s || 0),
+      new Date(y, b - 1, a, t.h, t.m, t.s || 0) 
+    ];
 
-    let candidates: Date[] = [];
-    if (a > 12 && b <= 31) {
-      // Definitely DD/MM/YYYY
-      candidates = [makeDate(b, a)];
-    } else if (b > 12 && a <= 12) {
-      // Definitely MM/DD/YYYY
-      candidates = [makeDate(a, b)];
+    const pastOrPresentCandidates = candidates.filter(d => d <= now);
+
+    let parsedDate;
+
+    if (pastOrPresentCandidates.length > 0) {
+      // If we have valid past dates, pick the most recent one.
+      // We sort by time descending, so the first element is the latest date.
+      pastOrPresentCandidates.sort((d1, d2) => d2.getTime() - d1.getTime());
+      parsedDate = pastOrPresentCandidates[0];
     } else {
-      // Ambiguous: try both
-      candidates = [makeDate(a, b), makeDate(b, a)];
-    }
-
-    // Select the candidate that is not in the far future; prefer the one in the past
-    let parsedDate = candidates[0];
-    for (const d of candidates) {
-      if (now.getTime() - d.getTime() >= 0) {
-        parsedDate = d;
-        break;
-      }
+      candidates.sort((d1, d2) => d1.getTime() - d2.getTime());
+      parsedDate = candidates[0];
     }
 
     return formatFromDate(parsedDate);
@@ -65,7 +58,6 @@ function to24HourParts(input: string): { h: number; m: number; s: number } | nul
   if (!input) return null;
   const s = input.replace(/\s+/g, " ").trim().toUpperCase();
 
-  // Match hh:mm[:ss] + AM/PM
   const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)\b/);
   if (!m) return null;
 
@@ -81,7 +73,6 @@ function to24HourParts(input: string): { h: number; m: number; s: number } | nul
   return { h, m: min, s: sec };
 }
 
-// Shared formatter used by all branches once we have a Date
 function formatFromDate(parsedDate: Date): string {
   const now = new Date();
   let diffMs = now.getTime() - parsedDate.getTime();
