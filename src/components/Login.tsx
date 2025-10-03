@@ -186,7 +186,7 @@ const statsData = [
         </h2>
 
         <p className="text-base md:text-lg text-blue-200 mt-4 mb-6">
-          Join thousands of professionals who landed dream jobs with AI-optimized resumes that beat ATS.
+          Join hundreds of professionals who landed dream jobs with AI-optimized resumes that beat ATS.
         </p>
 
         <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
@@ -333,4 +333,5 @@ const statsData = [
 );
 
 }
+
 
