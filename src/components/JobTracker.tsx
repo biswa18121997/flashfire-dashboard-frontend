@@ -377,6 +377,11 @@ const handleDragEnd = (e: React.DragEvent) => {
                     userDetails,
                     token: role !== "operations" ? token : undefined,
                     jobID,
+                    // Send operations user name when operations member updates status
+                    ...(role === "operations" && {
+                        role: "operations",
+                        operationsName: name || "operations"
+                    }),
                 }),
             });
 
