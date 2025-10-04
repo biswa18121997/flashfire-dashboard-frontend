@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Mail, Lock, User, Eye, EyeOff, CheckCircle, CreditCard } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, Eye, EyeOff, CheckCircle, CreditCard, Users } from 'lucide-react';
 import { toastUtils, toastMessages } from '../utils/toast';
 // import { GoogleLogin } from '@react-oauth/google';
 
@@ -13,13 +13,16 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    planType: 'Free Trial'
+    planType: 'Free Trial',
+    dashboardManager: ''
   });
   let [response, setResponse] = useState<{message?: string}>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dashboardManagers, setDashboardManagers] = useState([]);
+  const [loadingManagers, setLoadingManagers] = useState(false);
   const navigate = useNavigate();
   
   // Plan options
@@ -30,6 +33,34 @@ const Register = () => {
     { value: 'Executive', label: 'Executive', description: 'Premium features for career advancement' }
   ];
 
+  // Fetch dashboard managers on component mount
+  useEffect(() => {
+    const fetchDashboardManagers = async () => {
+      try {
+        setLoadingManagers(true);
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        const response = await fetch(`${API_BASE_URL}/dashboard-managers`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setDashboardManagers(data.data);
+          // Set default manager if available
+          if (data.data.length > 0 && !formData.dashboardManager) {
+            setFormData(prev => ({
+              ...prev,
+              dashboardManager: data.data[0].fullName
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard managers:', error);
+      } finally {
+        setLoadingManagers(false);
+      }
+    };
+
+    fetchDashboardManagers();
+  }, []);
 
   
   // Handle input changes with validation
@@ -97,7 +128,7 @@ const Register = () => {
     if (data?.message === 'User registered successfully') {
       toastUtils.dismissToast(loadingToast);
       toastUtils.success("Account created successfully! Please login to continue.");
-      setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', planType: 'Free Trial' });
+      setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', planType: 'Free Trial', dashboardManager: '' });
       setErrors({});  
       navigate('/login');
     } else {
@@ -300,7 +331,35 @@ const Register = () => {
                 {errors.planType && <p className="text-red-500 text-xs mt-1">{errors.planType}</p>}
               </div>
 
-
+              {/* Dashboard Manager Selection */}
+              <div>
+                <label htmlFor="dashboardManager" className="block text-xs font-medium text-gray-700 mb-1">
+                  Dashboard Manager *
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    id="dashboardManager"
+                    name="dashboardManager"
+                    value={formData.dashboardManager}
+                    onChange={handleInputChange}
+                    disabled={loadingManagers}
+                    className={`w-full pl-9 pr-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 text-sm bg-white ${
+                      errors.dashboardManager ? 'border-red-500' : 'border-gray-200'
+                    } ${loadingManagers ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <option value="">
+                      {loadingManagers ? 'Loading managers...' : 'Select your dashboard manager'}
+                    </option>
+                    {dashboardManagers.map((manager: any) => (
+                      <option key={manager._id} value={manager.fullName}>
+                        {manager.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.dashboardManager && <p className="text-red-500 text-xs mt-1">{errors.dashboardManager}</p>}
+              </div>
 
               {/* Password Input */}
               <div>
