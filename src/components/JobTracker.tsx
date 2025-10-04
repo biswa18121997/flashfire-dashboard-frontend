@@ -35,6 +35,7 @@ const [pendingMove, setPendingMove] = useState<{ jobID: string; status: JobStatu
 
     const role = useOperationsStore((state) => state.role);
     const name = useOperationsStore((state) => state.name);
+    const operationsEmail = useOperationsStore((state) => state.email);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -377,10 +378,11 @@ const handleDragEnd = (e: React.DragEvent) => {
                     userDetails,
                     token: role !== "operations" ? token : undefined,
                     jobID,
-                    // Send operations user name when operations member updates status
+                    // Send operations user name and email when operations member updates status
                     ...(role === "operations" && {
                         role: "operations",
-                        operationsName: name || "operations"
+                        operationsName: name || "operations",
+                        operationsEmail: operationsEmail || "operations@flashfirehq"
                     }),
                 }),
             });
