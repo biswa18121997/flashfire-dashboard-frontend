@@ -15,12 +15,16 @@ async function persistAttachmentsToJobPUT({
     token,
     urls,
     role,
+    operationsName,
+    operationsEmail,
 }: {
     jobID: string;
     userDetails: any; // must include { email }
     token?: string | null;
     urls: string[];
     role?: string;
+    operationsName?: string;
+    operationsEmail?: string;
 }) {
   if (role === "operations") {
         const res = await fetch(`${API_BASE_URL}/operations/jobs`, {
@@ -32,7 +36,8 @@ async function persistAttachmentsToJobPUT({
                 userDetails,
                 attachmentUrls: urls, // backend uses $addToSet $each
                 role: "operations",
-                operationsName: operationsName || "operations"
+                operationsName: operationsName || "operations",
+                operationsEmail: operationsEmail || "operations@flashfirehq"
             }),
         });
         const json = await res.json().catch(() => ({}));
@@ -124,6 +129,7 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
   const [previews, setPreviews] = useState<string[]>([]);
   const role = useOperationsStore((state) => state.role);
   const operationsName = useOperationsStore((state) => state.name);
+  const operationsEmail = useOperationsStore((state) => state.email);
 
   // preload form if editing
   useEffect(() => {
@@ -314,6 +320,8 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
                     token,
                     urls: uploadedUrls,
                     role,
+                    operationsName,
+                    operationsEmail,
                 });
               }
             } catch (err) {
@@ -364,6 +372,8 @@ const JobForm: React.FC<JobFormProps> = ({ job, onCancel, onSuccess, setUserJobs
                 token,
                 urls: uploadedUrls,
                 role,
+                operationsName,
+                operationsEmail,
             });
             if (resp?.updatedJobs) setUserJobs(resp.updatedJobs);
           }

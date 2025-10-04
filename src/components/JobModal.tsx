@@ -80,6 +80,7 @@ async function persistAttachmentsToJob({
     role,
     userDetails,
     operationsUserName,
+    operationsUserEmail,
 }: {
     jobID: string;
     userEmail: string;
@@ -88,6 +89,7 @@ async function persistAttachmentsToJob({
     role?: string;
     userDetails?: any;
     operationsUserName?: string;
+    operationsUserEmail?: string;
 }) {
     if (role == "operations") {
         const payload = {
@@ -96,7 +98,8 @@ async function persistAttachmentsToJob({
             userDetails: { email: userEmail, name: operationsUserName || userEmail },
             attachmentUrls: urls,
             role: role,
-            operationsName: operationsUserName || "operations"
+            operationsName: operationsUserName || "operations",
+            operationsEmail: operationsUserEmail || "operations@flashfirehq"
         };
 
         const res = await fetch(`${API_BASE}/operations/jobs`, {
@@ -243,7 +246,7 @@ export default function JobModal({
     const setData = ctx?.setData ?? null;
     const currentUser = ctx?.userDetails ?? {};
 
-    const { role, name: operationsUserName } = useOperationsStore();
+    const { role, name: operationsUserName, email: operationsUserEmail } = useOperationsStore();
 
     // NEW (paste-to-upload buffer)
     const [pastedImages, setPastedImages] = useState<File[]>([]);
@@ -419,6 +422,7 @@ useEffect(() => {
                role,
                userDetails: currentUser, // Pass user details
                operationsUserName, // Pass operations user name
+               operationsUserEmail, // Pass operations user email
            });
 
   if (resp?.updatedJobs) {
@@ -495,6 +499,7 @@ useEffect(() => {
                 role,
                 userDetails: currentUser,
                 operationsUserName,
+                operationsUserEmail,
             });
 
             if (resp?.updatedJobs) {
