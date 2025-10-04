@@ -189,7 +189,7 @@ const DashboardManagerDisplay: React.FC = () => {
             {managerData.fullName}
           </span>
           <span className="text-xs text-gray-500">
-            Your Manager
+            Your Dashboard Manager
           </span>
         </div>
 
