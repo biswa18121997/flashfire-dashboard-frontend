@@ -13,7 +13,8 @@ import { useUserJobs } from "../state_management/UserJobs.tsx";
 import { UserContext } from "../state_management/UserContext.js";
 import { useUserProfile } from "../state_management/ProfileContext.tsx";
 import LoadingScreen from "./LoadingScreen.tsx";
-import NewUserModal from "./NewUserModal.tsx";
+// import NewUserModal from "./NewUserModal.tsx"; // Removed for now
+import DashboardManagerDisplay from "./DashboardManagerDisplay.tsx";
 import { useOperationsStore } from "../state_management/Operations.ts";
 import { useJobsSessionStore } from "../state_management/JobsSessionStore";
 
@@ -290,11 +291,20 @@ const Dashboard: React.FC = () => {
     }
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* NewUserModal removed for now */}
             {showProfileModal && (
-                <NewUserModal
-                    setUserProfileFormVisibility={setShowProfileModal}
-                    onProfileComplete={() => setShowProfileModal(false)}
-                />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                    <div className="bg-white p-6 rounded-lg shadow-xl">
+                        <h2 className="text-xl font-bold mb-4">Profile Setup</h2>
+                        <p className="text-gray-600 mb-4">Profile setup is temporarily disabled.</p>
+                        <button 
+                            onClick={() => setShowProfileModal(false)}
+                            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
             )}
 
             {/* Job Form Modal */}
@@ -319,12 +329,21 @@ const Dashboard: React.FC = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Welcome Section */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Welcome to Your Career Dashboard
-                    </h1>
-                    <p className="text-gray-600 text-lg">
-                        Track your job applications, monitor your progress, and optimize your career journey with AI-powered insights.
-                    </p>
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                Welcome to Your Career Dashboard
+                            </h1>
+                            <p className="text-gray-600 text-lg">
+                                Track your job applications, monitor your progress, and optimize your career journey with AI-powered insights.
+                            </p>
+                        </div>
+                        
+                        {/* Dashboard Manager Display */}
+                        <div className="ml-4">
+                            <DashboardManagerDisplay />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Zero jobs hint */}
