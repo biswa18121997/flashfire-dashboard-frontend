@@ -13,7 +13,7 @@ import { useUserJobs } from "../state_management/UserJobs.tsx";
 import { UserContext } from "../state_management/UserContext.js";
 import { useUserProfile } from "../state_management/ProfileContext.tsx";
 import LoadingScreen from "./LoadingScreen.tsx";
-// import NewUserModal from "./NewUserModal.tsx"; // Removed for now
+import NewUserModal from "./NewUserModal.tsx";
 import DashboardManagerDisplay from "./DashboardManagerDisplay.tsx";
 import { useOperationsStore } from "../state_management/Operations.ts";
 import { useJobsSessionStore } from "../state_management/JobsSessionStore";
@@ -141,6 +141,13 @@ const Dashboard: React.FC = () => {
             // not first time – don't show
             setShowWelcome(false);
         }
+
+        // Check if profile is complete
+        console.log("Dashboard - Profile completion check:", {
+            userProfile: userProfile,
+            isComplete: isProfileComplete(),
+            hasProfile: !!userProfile,
+        });
 
         // Check if profile is complete
         console.log("Dashboard - Profile completion check:", {
@@ -291,20 +298,13 @@ const Dashboard: React.FC = () => {
     }
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* NewUserModal removed for now */}
+            {/* NewUserModal */}
             {showProfileModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-                    <div className="bg-white p-6 rounded-lg shadow-xl">
-                        <h2 className="text-xl font-bold mb-4">Profile Setup</h2>
-                        <p className="text-gray-600 mb-4">Profile setup is temporarily disabled.</p>
-                        <button 
-                            onClick={() => setShowProfileModal(false)}
-                            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
+                <NewUserModal 
+                    setUserProfileFormVisibility={setShowProfileModal}
+                    mode="create"
+                    startSection="personal"
+                />
             )}
 
             {/* Job Form Modal */}
