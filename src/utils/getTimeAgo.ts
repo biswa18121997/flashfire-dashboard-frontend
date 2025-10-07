@@ -27,19 +27,31 @@ function to24HourParts(input: string): { h: number; m: number; s: number } | nul
   if (!input) return null;
   const s = input.replace(/\s+/g, " ").trim().toUpperCase();
 
-  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)\b/);
-  if (!m) return null;
+  // Pattern 1: 12h clock with AM/PM
+  const m12 = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)\b/);
+  if (m12) {
+    let h = Number(m12[1]);
+    const min = Number(m12[2]);
+    const sec = m12[3] ? Number(m12[3]) : 0;
+    const mer = m12[4];
 
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const sec = m[3] ? Number(m[3]) : 0;
-  const mer = m[4];
+    if ([h, min, sec].some(Number.isNaN) || min > 59 || sec > 59 || h < 1 || h > 12) return null;
+    if (mer === "PM" && h !== 12) h += 12;
+    if (mer === "AM" && h === 12) h = 0;
+    return { h, m: min, s: sec };
+  }
 
-  if ([h, min, sec].some(Number.isNaN) || min > 59 || sec > 59 || h < 1 || h > 12) return null;
-  if (mer === "PM" && h !== 12) h += 12;
-  if (mer === "AM" && h === 12) h = 0;
+  // Pattern 2: 24h clock without AM/PM (e.g., "21:05:02")
+  const m24 = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (m24) {
+    const h = Number(m24[1]);
+    const min = Number(m24[2]);
+    const sec = m24[3] ? Number(m24[3]) : 0;
+    if ([h, min, sec].some(Number.isNaN) || h < 0 || h > 23 || min > 59 || sec > 59) return null;
+    return { h, m: min, s: sec };
+  }
 
-  return { h, m: min, s: sec };
+  return null;
 }
 
 // Parse strings saved as IST locale (DD/MM/YYYY, h:mm[:ss] AM/PM) and convert to the actual instant (UTC)
