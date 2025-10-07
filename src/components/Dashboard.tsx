@@ -610,7 +610,7 @@ const Dashboard: React.FC = () => {
                 {  uniqueJobs.length === 0 && (
                     <div className="mt-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
                          <h3 className="text-xl font-bold mb-2">
-                          Welcome aboard, {(userProfile?.name || context?.userDetails?.name)?.split(' ')?.[0] || 'User'}! 🎉
+                          Welcome aboard, {(userProfile?.firstName || context?.userDetails?.name?.split(' ')?.[0] || 'User')}! 🎉
                          </h3>
                          <p className="text-orange-100">
                             Our team will now begin working on your resume, and we'll share a draft here for your review once it's ready. It usually takes around 2-3 days to create a resume from scratch.
