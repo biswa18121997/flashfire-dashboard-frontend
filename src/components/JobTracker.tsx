@@ -519,7 +519,7 @@ const handleDragEnd = (e: React.DragEvent) => {
     };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6 bg-gradient-to-b from-[#FFF4EE] via-[#FFF9F4] to-white min-h-screen">
+    <div className="px-4 sm:px-6 lg:px-8 py-6  min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div className="flex flex-col justify-around items-start w-full">

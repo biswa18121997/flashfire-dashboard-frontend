@@ -247,7 +247,7 @@ const Dashboard: React.FC = () => {
         return <LoadingScreen />
     }
     return (
-        <div className="relative min-h-dvh bg-gradient-to-b from-[#FFF4EE] via-[#FFF9F4] to-white text-zinc-900 overflow-hidden">
+        <div className="relative min-h-dvh  text-zinc-900 overflow-hidden">
 
 
             {/* NewUserModal */}
