@@ -307,7 +307,7 @@ const Dashboard: React.FC = () => {
                         </p>
                         <button
                             onClick={() => setShowJobForm(true)}
-                            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-5 py-2 rounded-lg font-medium transition-all duration-200"
+                            className="bg-gradient-to-r from-orange-300 to-red-300 hover:from-orange-600 hover:to-red-700 text-white px-5 py-2 rounded-lg font-medium transition-all duration-200"
                         >
                             Add Your First Job
                         </button>
