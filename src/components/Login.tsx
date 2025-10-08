@@ -22,7 +22,7 @@ const statsData = [
     color: "text-emerald-600",
   },
   {
-    value: "50K+",
+    value: "100K+",
     label: "Applications Sent",
     icon: <Users className="w-5 h-5" />,
     color: "text-blue-600",
@@ -172,7 +172,7 @@ export default function LoginPage({
               </span>
             </h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Join thousands of professionals who landed dream jobs with AI-optimized resumes that beat ATS systems.
+              Join hundreds of professionals who landed dream jobs with AI-optimized resumes that beat ATS systems.
             </p>
           </div>
 
@@ -309,3 +309,4 @@ export default function LoginPage({
     </div>
   )
 }
+
