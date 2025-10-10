@@ -11,18 +11,19 @@ interface ResumeStore {
      isProjectsEditable: boolean;
      isLeadershipEditable: boolean;
      isSkillsEditable: boolean;
-     isEducationEditable: boolean;
-     resume_id: string;
-     accessKey:   string;
-     userId: string;
+    isEducationEditable: boolean;
+    resume_id: string;
+    accessKey: string;
+    unlockKey: string;
+    userId: string;
 
-     // Actions
-     setUserId: (data: string) => void;
-     setEditingUnlocked: (value: boolean) => void;
-     validateUnlockKey: (key: string) => Promise<boolean>;
-     setResumeId: (id: string) => void;
-     setAccessKey: (key: string) => void;
-     checkAdminAndUnlock: () => boolean;
+    // Actions
+    setUserId: (data: string) => void;
+    setEditingUnlocked: (value: boolean) => void;
+    validateUnlockKey: (key: string) => Promise<boolean>;
+    setResumeId: (id: string) => void;
+    setAccessKey: (key: string) => void;
+    checkAdminAndUnlock: () => boolean;
 
      // Individual section controls (for future granular control if needed)
      setPersonalInfoEditable: (value: boolean) => void;
@@ -45,14 +46,15 @@ export const useResumeUnlockStore = create<ResumeStore>((set , get) => ({
      isSummaryEditable: false,
      isWorkExperienceEditable: false,
      isProjectsEditable: false,
-     isLeadershipEditable: false,
-     isSkillsEditable: false,
-     isEducationEditable: false,
-     resume_id: "" ,
-     userId: "",
-     accessKey: "",
+    isLeadershipEditable: false,
+    isSkillsEditable: false,
+    isEducationEditable: false,
+    resume_id: "" ,
+    userId: "",
+    accessKey: "",
+    unlockKey: "",
 
-     // Check if user is admin and auto-unlock
+    // Check if user is admin and auto-unlock
      checkAdminAndUnlock: () => {
           const userRole = localStorage.getItem('role');
           if (userRole === 'admin') {

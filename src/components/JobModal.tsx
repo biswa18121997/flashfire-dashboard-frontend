@@ -665,12 +665,12 @@ useEffect(() => {
             icon: TimerIcon,
             color: "bg-brown-800 text-orange-700 border-orange-200",
         },
-        // {
-        //     id: "changes",
-        //     label: "Changes Made",
-        //     icon: GitCommit,
-        //     color: "bg-brown-800 text-orange-700 border-orange-200",
-        // },
+        {
+            id: "changes",
+            label: "Changes Made",
+            icon: GitCommit,
+            color: "bg-brown-800 text-orange-700 border-orange-200",
+        },
     ] as const;
 
     const renderContent = () => {
@@ -1290,25 +1290,44 @@ useEffect(() => {
                                 </p>
                             </div>
                         </div>
-{/*                         {role == "operations" ? (
-                            // <button
-                            //     onClick={() => {
-                            //         window.open(
-                            //             `/optimize/${jobDetails._id}?view=editor`,
-                            //             "_blank"
-                            //         );
-                            //     }}
-                            //     className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700"
-                            // >
-                            //     Optimize resume
-                            // </button>
-                        ) : null} */}
-                        <button
-                            onClick={() => setShowJobModal(false)}
-                            className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div className="flex items-center space-x-4">
+                            {role == "operations" ? (
+                                <button
+                                    onClick={() => {
+                                        // Try _id first, then fall back to jobID
+                                        const mongoId = jobDetails._id;
+                                        const jobId = jobDetails.jobID;
+                                        
+                                        // Prefer _id if available, otherwise use jobID
+                                        const idToUse = mongoId || jobId;
+                                        
+                                        if (!idToUse) {
+                                            console.error('No ID found in job details:', jobDetails);
+                                            alert('Error: Job ID not found. Please refresh the page and try again.');
+                                            return;
+                                        }
+                                        
+                                        console.log('Opening optimizer with ID:', idToUse, '(using', mongoId ? '_id' : 'jobID', ')');
+                                        
+                                        // Use appropriate query parameter
+                                        const queryParam = mongoId ? 'id' : 'jobId';
+                                        window.open(
+                                            `/optimize/${idToUse}?view=editor&${queryParam}=${idToUse}`,
+                                            "_blank"
+                                        );
+                                    }}
+                                    className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700 px-4 py-2"
+                                >
+                                    Optimize Resume
+                                </button>
+                            ) : null}
+                            <button
+                                onClick={() => setShowJobModal(false)}
+                                className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1348,12 +1367,12 @@ useEffect(() => {
                                     icon: TimerIcon,
                                     color: "bg-brown-800 text-orange-700 border-orange-200",
                                 },
-                                // {
-                                //     id: "changes",
-                                //     label: "Changes Made",
-                                //     icon: GitCommit,
-                                //     color: "bg-brown-800 text-red-700 border-orange-300",
-                                // },
+                                {
+                                    id: "changes",
+                                    label: "Changes Made",
+                                    icon: GitCommit,
+                                    color: "bg-brown-800 text-red-700 border-orange-300",
+                                },
                             ].map((section: any) => {
                                 const Icon = section.icon;
                                 const isActive = activeSection === section.id;

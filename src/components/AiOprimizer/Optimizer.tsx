@@ -22,6 +22,7 @@ import { ResumePreview1 } from "./components/ResumePreview1";
 import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
 import { ResumePreviewMedical } from "./components/ResumePreviewMedical";
+import { useJobsSessionStore } from "../../state_management/JobsSessionStore";
 import "./index.css"; //
 
 // Type definitions remain the same
@@ -71,6 +72,129 @@ interface PublicationItem {
 }
 type ResumeDataType = typeof initialData;
 
+function AccessKeyEditor() {
+    const { resume_id, unlockKey: accessKey, setAccessKey } = useResumeUnlockStore();
+    const [inputKey, setInputKey] = useState<string>(accessKey || "");
+    const [originalKey, setOriginalKey] = useState<string>(accessKey || "");
+    const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+    const [showConfirm, setShowConfirm] = useState<boolean>(false);
+    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+    const isAdmin = typeof window !== 'undefined' && localStorage.getItem("role") === "admin";
+
+    useEffect(() => {
+        setInputKey(accessKey || "");
+        setOriginalKey(accessKey || "");
+        // If we don't have a value yet, fetch from backend for accuracy
+        const fetchUnlock = async () => {
+            if (!accessKey && resume_id) {
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+                    const res = await fetch(`${apiUrl}/api/resume-index/${resume_id}`);
+                    const data = await res.json();
+                    if (res.ok && data && typeof data.unlockKey === 'string') {
+                        setAccessKey(data.unlockKey);
+                        setInputKey(data.unlockKey);
+                        setOriginalKey(data.unlockKey);
+                    }
+                } catch (e) {
+                    console.error("Error fetching unlock key:", e);
+                    
+                }
+            }
+        };
+        fetchUnlock();
+    }, [accessKey, resume_id, setAccessKey]);
+
+    const hasChanges = inputKey.trim() !== (originalKey || "");
+    const disabled = !resume_id || !hasChanges || status === "saving";
+
+    const performUpdate = async () => {
+        if (!resume_id || !hasChanges) return;
+        try {
+            setStatus("saving");
+            const res = await fetch(`${apiUrl}/api/update-unlock-key`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ resume_id, unlockKey: inputKey.trim() })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                throw new Error(data.error || "Failed to update unlock key");
+            }
+            setAccessKey(data.unlockKey);
+            setOriginalKey(data.unlockKey);
+            setStatus("saved");
+            setTimeout(() => setStatus("idle"), 1500);
+        } catch (e) {
+            setStatus("error");
+            setTimeout(() => setStatus("idle"), 2000);
+        }
+    };
+
+    const handleUpdateClick = () => {
+        if (!hasChanges || !resume_id) return;
+        setShowConfirm(true);
+    };
+
+    // Only admins can see and update unlock key editor
+    if (!resume_id || !isAdmin) {
+        return null;
+    }
+
+    return (
+        <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unlock Key</label>
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={inputKey}
+                    onChange={(e) => setInputKey(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter unlock key"
+                />
+                <button
+                    onClick={handleUpdateClick}
+                    disabled={disabled}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${disabled ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                >
+                    {status === "saving" ? "Updating..." : "Update Unlock Key"}
+                </button>
+            </div>
+            {status === "saved" && (
+                <p className="text-xs text-green-600 mt-1">Unlock key updated.</p>
+            )}
+            {status === "error" && (
+                <p className="text-xs text-red-600 mt-1">Failed to update unlock key.</p>
+            )}
+            {showConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[999] flex items-center justify-center" onClick={() => setShowConfirm(false)}>
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirm Update</h3>
+                        <p className="text-sm text-gray-600 mb-4">Do you want to update the unlock key?</p>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-3 py-2 text-sm rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                onClick={() => setShowConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                                onClick={() => {
+                                    performUpdate();
+                                    setShowConfirm(false);
+                                }}
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function App() {
     // URL parameters
     const [searchParams] = useSearchParams();
@@ -85,6 +209,9 @@ function App() {
         "login"
     );
     const { versionV, setVersion } = PreviewStore();
+
+    // Get session store for updating job cache
+    const { updateJob } = useJobsSessionStore();
 
     const {
         resumeData,
@@ -139,6 +266,11 @@ function App() {
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
+
+    // Always open in Editor on initial load
+    useEffect(() => {
+        setCurrentResumeView("editor");
+    }, []);
 
     // Debug: Log store state on mount
     useEffect(() => {
@@ -236,7 +368,7 @@ function App() {
             }
 
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:8001";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
             const response = await fetch(
                 `${apiUrl}/api/check-projects?userEmail=${encodeURIComponent(
                     userEmail
@@ -456,7 +588,7 @@ function App() {
                             try {
                                 const apiUrl =
                                     import.meta.env.VITE_API_URL ||
-                                    "http://localhost:8001";
+                                    "https://resume-maker-backend-lf5z.onrender.com";
                                 const response = await fetch(
                                     `${apiUrl}/api/default-resume/${storedEmail}`
                                 );
@@ -514,6 +646,14 @@ function App() {
             setCurrentResumeView("editor");
         }
     }, [authView, startWithEditor, userRole, setCurrentResumeView]);
+
+    // Reinforce: after resume data (or last-selected resume) hydrates, ensure URL wins
+    useEffect(() => {
+        if (authView === "resume" && startWithEditor && userRole !== "admin") {
+            setCurrentResumeView("editor");
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resumeData, baseResume, storeHydrated]);
 
     // Auto-unlock sections for admin users
     useEffect(() => {
@@ -688,7 +828,7 @@ function App() {
                         import.meta.env.VITE_API_URL ||
                         (import.meta.env.DEV
                             ? import.meta.env.VITE_DEV_API_URL ||
-                              "http://localhost:8001"
+                              "https://resume-maker-backend-lf5z.onrender.com"
                             : "");
                     const response = await fetch(
                         `${apiUrl}/api/default-resume/${userEmail}`
@@ -864,7 +1004,7 @@ function App() {
                 : "user";
             const filename = `${safeName}_resume.pdf`;
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:5000";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
             const saveData = {
                 filename,
                 data: resumeData,
@@ -911,7 +1051,7 @@ function App() {
         try {
             console.log("Saving to V1 resume with ID:", resume_id);
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:5000";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
             await fetch(`${apiUrl}/api/save-v1-resume`, {
                 method: "POST",
                 headers: {
@@ -929,7 +1069,7 @@ function App() {
         try {
             console.log("Saving to V2 resume with ID:", resume_id);
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:5000";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
             await fetch(`${apiUrl}/api/save-v2-resume`, {
                 method: "POST",
                 headers: {
@@ -1131,9 +1271,9 @@ function App() {
             const prompt: string =
                 "if you recieve any HTML tages please ignore it and optimize the resume according to the given JD. Make sure not to cut down or shorten any points in the Work Experience section. IN all fields please do not cut down or shorten any points or content. For example, if a role in the base resume has 6 points, the optimized version should also retain all 6 points. The content should be aligned with the JD but the number of points per role must remain the same. Do not touch or optimize publications if given to you.";
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:5000";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
 
-            const response = await fetch(`${apiUrl}/api/optimize-resume`, {
+            const response = await fetch(`${apiUrl}/api/optimize-with-gemini`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -1168,6 +1308,15 @@ function App() {
                         optimizedData.publications || resumeData.publications,
                 });
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
+                
+                // Update job in session storage to reflect changes immediately
+                if (jobId) {
+                    updateJob(jobId, { 
+                        updatedAt: new Date().toISOString()
+                    });
+                    console.log("✅ Updated job in session storage to trigger re-render");
+                }
+                
                 alert(
                     'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
                 );
@@ -1412,24 +1561,28 @@ function App() {
 
                                 {/* Navigation Buttons */}
                                 <nav className="flex space-x-4">
-                                    <button
-                                        onClick={() => {
-                                            setVersion(1);
-                                            setShowModal(true);
-                                        }}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                    >
-                                        All resume V1
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setVersion(2);
-                                            setShowModal(true);
-                                        }}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                    >
-                                        Medical resumes
-                                    </button>
+                                    {userRole === "admin" && (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setVersion(1);
+                                                    setShowModal(true);
+                                                }}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                            >
+                                                All resume V1
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setVersion(2);
+                                                    setShowModal(true);
+                                                }}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                            >
+                                                Medical resumes
+                                            </button>
+                                        </>
+                                    )}
 
                                     {/* All Resumes Button */}
                                     <button
@@ -1718,6 +1871,9 @@ function App() {
                                         </p>
                                     )}
 
+                                    {/* Admin-only Unlock Key Editor (moved below Save, above Start Over) */}
+                                    <AccessKeyEditor />
+
                                     {/* Start Over Button */}
                                     <button
                                         onClick={handleStartOver}
@@ -1816,7 +1972,7 @@ function App() {
                                                         d="M13 10V3L4 14h7v7l9-11h-7z"
                                                     />
                                                 </svg>
-                                                Optimize with AI
+                                                Optimize with Gemini
                                             </>
                                         )}
                                     </button>

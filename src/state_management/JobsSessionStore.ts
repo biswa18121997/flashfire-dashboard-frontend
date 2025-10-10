@@ -16,6 +16,8 @@ interface JobsSessionState {
   setJobs: (jobs: Job[]) => void;
   addJob: (job: Job) => void;
   updateJob: (jobId: string, updates: Partial<Job>) => void;
+  refreshJobById: (jobId: string) => Promise<void>;
+  refreshJobByMongoId: (mongoId: string) => Promise<void>;
   updateJobStatus: (jobId: string, status: JobStatus) => void;
   deleteJob: (jobId: string) => void;
   setLoading: (loading: boolean) => void;
@@ -78,6 +80,110 @@ export const useJobsSessionStore = create<JobsSessionState>()(
             : job
         )
       })),
+
+      // Fetch latest job from backend and update only that job in session store
+      refreshJobById: async (jobId: string) => {
+        try {
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+          if (!API_BASE) return;
+          const res = await fetch(`${API_BASE}/getJobDescription`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: jobId })
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          set((state) => ({
+            jobs: state.jobs.map((job) =>
+              job.jobID === jobId
+                ? {
+                    ...job,
+                    jobDescription: data.jobDescription || job.jobDescription,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : job
+            ),
+          }));
+        } catch {}
+      },
+
+      // Fetch latest job from backend by MongoDB _id or jobID and update in session store
+      refreshJobByMongoId: async (mongoId: string) => {
+        try {
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+          if (!API_BASE) {
+            console.error('API_BASE is not defined in environment variables');
+            return;
+          }
+          
+          console.log(`[refreshJobByMongoId] Fetching job with ID: ${mongoId} from ${API_BASE}/getJobById`);
+          
+          const res = await fetch(`${API_BASE}/getJobById`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: mongoId })
+          });
+          
+          console.log(`[refreshJobByMongoId] Response status: ${res.status}`);
+          
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error(`[refreshJobByMongoId] Failed to fetch job: ${errorText}`);
+            return;
+          }
+          
+          const data = await res.json();
+          console.log('[refreshJobByMongoId] Response data:', data);
+          
+          if (!data.success || !data.job) {
+            console.error('[refreshJobByMongoId] Invalid response structure:', data);
+            return;
+          }
+          
+          const updatedJob = data.job;
+          console.log('[refreshJobByMongoId] Updated job data:', updatedJob);
+          
+          // Update the job in session storage - match by either _id or jobID
+          set((state) => {
+            const jobIndex = state.jobs.findIndex((job) => 
+              job._id === mongoId || job.jobID === mongoId
+            );
+            console.log(`[refreshJobByMongoId] Found job at index: ${jobIndex}`);
+            
+            return {
+              jobs: state.jobs.map((job) =>
+                (job._id === mongoId || job.jobID === mongoId)
+                  ? {
+                      ...job,
+                      ...updatedJob,
+                      _id: updatedJob._id,
+                      jobID: updatedJob.jobID,
+                      dateAdded: updatedJob.dateAdded,
+                      userID: updatedJob.userID,
+                      jobTitle: updatedJob.jobTitle,
+                      currentStatus: updatedJob.currentStatus,
+                      jobDescription: updatedJob.jobDescription,
+                      joblink: updatedJob.joblink,
+                      companyName: updatedJob.companyName,
+                      timeline: updatedJob.timeline,
+                      createdAt: updatedJob.createdAt,
+                      updatedAt: updatedJob.updatedAt,
+                      attachments: updatedJob.attachments,
+                      changesMade: updatedJob.changesMade,
+                      operatorName: updatedJob.operatorName,
+                      operatorEmail: updatedJob.operatorEmail,
+                      appliedDate: updatedJob.appliedDate
+                    }
+                  : job
+              ),
+            };
+          });
+          
+          console.log('[refreshJobByMongoId] Session storage updated successfully');
+        } catch (error) {
+          console.error('[refreshJobByMongoId] Error refreshing job by MongoDB ID:', error);
+        }
+      },
 
       updateJobStatus: (jobId, status) => set((state) => ({
         jobs: state.jobs.map(job => 
