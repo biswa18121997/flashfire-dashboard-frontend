@@ -55,7 +55,7 @@ const JobCard: React.FC<JobCardProps> = ({
       <div className="flex items-center text-xs text-gray-500 mb-3">
         <Calendar className="w-3 h-3 mr-1" />
         <span>
-          {getTimeAgo(job?.updatedAt || job?.createdAt || job?.dateAdded)}
+          {getTimeAgo(job?.createdAt || job?.dateAdded || job?.updatedAt)}
         </span>
       </div>
 
