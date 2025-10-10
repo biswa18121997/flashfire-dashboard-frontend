@@ -798,7 +798,7 @@ useEffect(() => {
                                 </span>
                             </div>
                             <p className="text-lg font-semibold text-gray-900">
-                                {getTimeAgo(jobDetails?.updatedAt || jobDetails?.createdAt || jobDetails?.dateAdded)}
+                                {getTimeAgo(jobDetails?.createdAt || jobDetails?.dateAdded || jobDetails?.updatedAt)}
                             </p>
                         </div>
 
