@@ -1302,96 +1302,114 @@ export default function DocumentUpload() {
   //         )}
   //       </div>
   //     );
-  const DocsTable = ({
-    items,
-    category,
-    onPick,
-  }: {
-    items: Entry[];
-    category: "Resume" | "Cover Letter" | "Base" | "Transcript";
-    onPick: (item: Entry) => void;
-  }) => (
-    <div className="border rounded-lg overflow-hidden">
-      {/* ✅ Header */}
-      <div className="grid grid-cols-12 bg-gray-100 text-sm font-bold px-4 py-3">
-        <div className="col-span-5">Title</div>
-        <div className="col-span-3">Created On</div>
-        <div className="col-span-2">Category</div>
-        {activeTab !== "base" && activeTab !== "cover" && activeTab !== "transcript" && (
-          <div className="col-span-1">Job Link</div>
-        )}
-        <div className="col-span-1 text-right">Actions</div>
-      </div>
+ const DocsTable = ({
+  items,
+  category,
+  onPick,
+}: {
+  items: Entry[];
+  category: "Resume" | "Cover Letter" | "Base" | "Transcript";
+  onPick: (item: Entry) => void;
+}) => (
+  <div className="border rounded-lg overflow-hidden">
+    {/* ✅ Scrollable Container */}
+    <div className="overflow-x-auto">
+      <div className="min-w-[500px]"> {/* ensures proper column spacing */}
+        {/* ✅ Header */}
+        <div className="grid grid-cols-12 bg-gray-100 text-sm font-bold px-4 py-3 sticky top-0 z-10">
+          <div className="col-span-5">Title</div>
+          <div className="col-span-3">Created On</div>
+          <div className="col-span-2">Category</div>
+          {activeTab !== "base" &&
+            activeTab !== "cover" &&
+            activeTab !== "transcript" && (
+              <div className="col-span-1">Job Link</div>
+            )}
+          <div className="col-span-1 text-right">Actions</div>
+        </div>
 
-      {/* ✅ Body */}
-      {items.length === 0 ? (
-        <div className="px-4 py-6 text-sm text-gray-500">No documents yet.</div>
-      ) : (
-        <ul className="divide-y flex flex-col flex-col-reverse">
-          {items.map((it, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-12 items-center px-2 py-4 hover:bg-gray-50 cursor-pointer"
-              onClick={() => onPick(it)}
-              title="Click to preview"
-            >
-              {/* Title */}
-              <div className="col-span-5 truncate w-full">
-                {category === "Base" || category === "Cover Letter" || category === "Transcript"
-                  ? it.name || "Unnamed"
-                  : `${it.jobRole || "—"} at ${it.companyName || "—"}`}
-              </div>
-
-              {/* Created On */}
-              <div className="col-span-3 text-sm text-gray-600">
-                {it.createdAt
-                  ? new Date(it.createdAt).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })
-                  : "—"}
-              </div>
-
-              {/* Category */}
-              <div className="col-span-2">{category} {category == "Base" ? "Resume" : ""}</div>
-
-              {/* Job Link (only for optimized resumes) */}
-              {activeTab !== "base" && activeTab !== "cover" && activeTab !== 'transcript' && (
-                <div className="col-span-1">
-                  {it.jobLink ? (
-                    <a
-                      href={it.jobLink.startsWith("http") ? it.jobLink : `https://${it.jobLink}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Link
-                    </a>
-                  ) : (
-                    "—"
-                  )}
+        {/* ✅ Body */}
+        {items.length === 0 ? (
+          <div className="px-4 py-6 text-sm text-gray-500">No documents yet.</div>
+        ) : (
+          <ul className="divide-y flex flex-col flex-col-reverse">
+            {items.map((it, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-12 items-center px-2 py-4 hover:bg-gray-50 cursor-pointer"
+                onClick={() => onPick(it)}
+                title="Click to preview"
+              >
+                {/* Title */}
+                <div className="col-span-5 truncate w-full">
+                  {category === "Base" ||
+                  category === "Cover Letter" ||
+                  category === "Transcript"
+                    ? it.name || "Unnamed"
+                    : `${it.jobRole || "—"} at ${it.companyName || "—"}`}
                 </div>
-              )}
 
-              {/* Actions */}
-              <div className="col-span-1 flex justify-end gap-2">
-                <a
-                  href={toRawPdfUrl(it.link || it.url) || it.link || it.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title="Download"
-                >
-                  <DownloadIcon />
-                </a>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+                {/* Created On */}
+                <div className="col-span-3 text-sm text-gray-600 whitespace-nowrap">
+                  {it.createdAt
+                    ? new Date(it.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </div>
+
+                {/* Category */}
+                <div className="col-span-2 whitespace-nowrap">
+                  {category} {category == "Base" ? "Resume" : ""}
+                </div>
+
+                {/* Job Link */}
+                {activeTab !== "base" &&
+                  activeTab !== "cover" &&
+                  activeTab !== "transcript" && (
+                    <div className="col-span-1 whitespace-nowrap">
+                      {it.jobLink ? (
+                        <a
+                          href={
+                            it.jobLink.startsWith("http")
+                              ? it.jobLink
+                              : `https://${it.jobLink}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Link
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                  )}
+
+                {/* Actions */}
+                <div className="col-span-1 flex justify-end gap-2 whitespace-nowrap">
+                  <a
+                    href={toRawPdfUrl(it.link || it.url) || it.link || it.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Download"
+                  >
+                    <DownloadIcon />
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
-  );
+  </div>
+);
 
 
   // ---- Reusable Preview Panel (iframe) ----

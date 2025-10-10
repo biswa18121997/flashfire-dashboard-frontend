@@ -558,7 +558,7 @@ const handleDragEnd = (e: React.DragEvent) => {
           </div>
           <button
             onClick={() => setShowJobForm(true)}
-            className="whitespace-nowrap bg-gradient-to-br from-orange-300 to-red-300 border-b border-border/50 border-red-500 hover:from-orange-400 hover:to-red-400 text-gray px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+            className="whitespace-nowrap bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Add Jobs
           </button>

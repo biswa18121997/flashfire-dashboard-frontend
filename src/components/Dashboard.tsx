@@ -213,7 +213,7 @@ const Dashboard: React.FC = () => {
                 </span>
               </h1>
               <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl">
-                Track your job applications, monitor your progress, and optimize your career journey with{" "}
+                Track your job applications, monitor your progress, and optimize your career journey with{"   "}   
                 <span className="font-semibold text-orange-600">AI-powered insights</span>.
               </p>
             </div>
@@ -234,7 +234,7 @@ const Dashboard: React.FC = () => {
             </p>
             <button
               onClick={() => setShowJobForm(true)}
-              className="w-full sm:w-auto bg-gradient-to-r from-orange-300 to-red-300 hover:from-orange-600 hover:to-red-700 text-gray hover:text-white px-5 py-2 rounded-lg font-medium transition-all duration-200"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-all duration-200"
             >
               Add Your First Job
             </button>

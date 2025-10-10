@@ -123,24 +123,18 @@ const Navigation: React.FC<NavigationProps> = ({
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
-              <img
-                src="./Logo.png"
-                alt="FLASHFIRE"
-                className="rounded-md w-full h-full object-cover"
-              />
+           <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+              {/* <FileText className="w-7 h-7 text-white" /> */}
+              <img src="./Logo.png" alt="" className='rounded-xl' />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg font-semibold text-foreground tracking-tight">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                 FLASHFIRE
               </h1>
-              <p className="text-[10px] text-muted-foreground font-medium -mt-0.5 tracking-wide uppercase">
-                Workflow Optimization
-              </p>
+              <p className="text-xs text-gray-500 font-medium -mt-1">Complete Workflow Optimization</p>
             </div>
-          </Link>
-
+          </div>
           {/* Desktop Tabs */}
           <div className="hidden md:flex items-center gap-4">
             {tabs.map(({ id, label, icon: Icon }) => (
@@ -150,8 +144,8 @@ const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => onTabChange(id)}
                 className={`relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 overflow-hidden group ${
                   activeTab === id
-                    ? "bg-gradient-to-r from-orange-500/10 to-red-500/10 text-gray border border-red-500/50 shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white border shadow-md"
+                    : " text-gray-700 hover:text-gray-900 hover:bg-gray-200  hover:shadow hover:scale-[1.02] active:scale-[0.98]"
                 }`}
               >
                 <Icon
@@ -207,31 +201,23 @@ const Navigation: React.FC<NavigationProps> = ({
             {user ? (
               <div className="relative hidden md:block" ref={desktopDropdownRef}>
                 <button
-                  data-nav-trigger
                   onClick={() => setProfileDropDown(!profileDropDown)}
-                  className="relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 border border-border/50 hover:border-red-500/50 overflow-hidden group"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 border border-gray-200"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <User className="w-5 h-5 text-gray" />
-                  <div className="hidden md:block text-left relative z-10">
-                    <p className="text-sm font-semibold text-foreground leading-none">
-                      {user}
-                    </p>
-                    <p className="text-xs text-orange-600 font-medium flex items-center gap-1 mt-1">
-                      Account Settings
-                    </p>
+                  <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow">
+                    <User className="w-4 h-4 text-white" />
                   </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-muted-foreground transition-transform duration-300 relative z-10 ${
-                      profileDropDown ? "rotate-180" : ""
-                    }`}
-                  />
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-semibold text-gray-700">{user}</p>
+                    <p className="text-xs text-gray-500">Account</p>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${profileDropDown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {profileDropDown && (
                   <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-2xl border border-border overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 hidden md:block">
                     <Link to="/profile" target="_blank" rel="noopener noreferrer">
-                      <div className="relative flex items-center gap-4 p-5 bg-gradient-to-br from-orange-50 to-red-50 border-b border-border hover:from-orange-100 hover:to-red-100 transition-all duration-300 group">
+                      <div className="relative flex items-center gap-4 p-5 bg white transition-all duration-300 group">
                         <div className="flex-1 min-w-0">
                           <p className="text-base font-bold text-foreground truncate">
                             {user}
@@ -331,7 +317,7 @@ const Navigation: React.FC<NavigationProps> = ({
           className="absolute top-16 right-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fade-in p-5 space-y-5 md:hidden"
         >
           <Link to="/profile" target="_blank" rel="noopener noreferrer">
-            <div className="relative flex items-center gap-4 p-5 bg-gradient-to-br from-orange-50 to-red-50 border-b border-border hover:from-orange-100 hover:to-red-100 transition-all duration-300 group">
+            <div className="relative flex items-center gap-4 p-5 bg-white border-b border-border  transition-all duration-300 group">
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold text-foreground truncate">
                   {user}
