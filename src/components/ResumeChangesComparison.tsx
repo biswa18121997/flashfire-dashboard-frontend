@@ -9,11 +9,11 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
         !changesMade.startingContent ||
         !changesMade.finalChanges
     ) {
-        return (
-            <div className="text-gray-500 italic">
-                No changes available, please optimize your resume.
-            </div>
-        );
+        // return (
+        //     <div className="text-gray-500 italic">
+        //         No changes available, please optimize your resume.
+        //     </div>
+        // );
     }
 
     const { startingContent, finalChanges } = changesMade;
