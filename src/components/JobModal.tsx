@@ -1256,10 +1256,10 @@ useEffect(() => {
                                     changesMade={jobDetails.changesMade}
                                 />
                             ) : (
-                                <div className="text-gray-500 italic">
-                                    No changes available, please optimize your
-                                    resume.
-                                </div>
+                                // <div className="text-gray-500 italic">
+                                //     No changes available, please optimize your
+                                //     resume.
+                                // </div>
                             )}
                         </div>
                     </div>
@@ -1437,3 +1437,4 @@ useEffect(() => {
         </div>
     );
 }
+
