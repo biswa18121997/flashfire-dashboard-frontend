@@ -513,7 +513,7 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
                 >
                     show changes in dashboard
                 </button> */}
-            </div> */}
+            {/* </div> */} */}
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 📊 Optimization Changes Summary
             </h2>
