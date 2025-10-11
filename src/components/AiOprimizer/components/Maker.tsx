@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, User, FileText, Edit, Trash2, Globe, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toastUtils } from '../../../utils/toast';
 
 interface MakerProps {
@@ -24,6 +25,7 @@ interface Resume {
 }
 
 const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -32,6 +34,12 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newResumeName, setNewResumeName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authView, setAuthView] = useState<"login" | "admin" | "resume" | "maker">(
+    "maker"
+);
+  
+  // Track if we just created a new client to skip unnecessary refresh
+  const skipNextRefresh = useRef(false);
   
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-maker-backend-lf5z.onrender.com';
 
@@ -43,6 +51,11 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
   // Refresh selected client when it changes
   useEffect(() => {
     if (selectedClient) {
+      // Skip refresh if we just created this client
+      if (skipNextRefresh.current) {
+        skipNextRefresh.current = false;
+        return;
+      }
       refreshSelectedClient();
     }
   }, [selectedClient?._id]);
@@ -89,15 +102,19 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
         const data = await response.json();
         const updatedClient = {
           ...data.client,
-          resumes: data.resumes
+          resumes: data.resumes || []
         };
         setClients(prev => prev.map(client => 
           client._id === selectedClient._id ? updatedClient : client
         ));
         setSelectedClient(updatedClient);
+      } else {
+        console.error('Failed to refresh client:', response.status, response.statusText);
+        // Don't show error toast here as it's a background refresh
       }
     } catch (error) {
       console.error('Error refreshing client:', error);
+      // Don't show error toast here as it's a background refresh
     }
   };
 
@@ -122,14 +139,22 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
 
       if (response.ok) {
         const newClient = await response.json();
-        setClients(prev => [...prev, newClient]);
-        setSelectedClient(newClient);
+        // Ensure the new client has a resumes array
+        const clientWithResumes = {
+          ...newClient,
+          resumes: newClient.resumes || []
+        };
+        setClients(prev => [...prev, clientWithResumes]);
+        // Set flag to skip the automatic refresh since we already have fresh data
+        skipNextRefresh.current = true;
+        setSelectedClient(clientWithResumes);
         setNewClientName('');
         setNewClientEmail('');
         setShowAddClientModal(false);
         toastUtils.success('Client added successfully');
       } else {
-        toastUtils.error('Failed to add client');
+        const errorData = await response.json().catch(() => ({}));
+        toastUtils.error(errorData.error || 'Failed to add client');
       }
     } catch (error) {
       console.error('Error adding client:', error);
@@ -159,8 +184,7 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
       });
 
       if (response.ok) {
-        const newResume = await response.json();
-        
+        // Resume created successfully
         // Refresh the client data to ensure we have the latest state
         await refreshSelectedClient();
         
@@ -168,7 +192,8 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
         setShowAddResumeModal(false);
         toastUtils.success('Resume added successfully');
       } else {
-        toastUtils.error('Failed to add resume');
+        const errorData = await response.json().catch(() => ({}));
+        toastUtils.error(errorData.error || 'Failed to add resume');
       }
     } catch (error) {
       console.error('Error adding resume:', error);
@@ -289,6 +314,27 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
               <p className="text-gray-600 mt-1">
                 Manage clients and create resumes for them
               </p>
+            </div>
+            <div>
+              <button
+                onClick={() => setAuthView("admin") }
+                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Dashboard
+              </button>
             </div>
           </div>
         </div>
