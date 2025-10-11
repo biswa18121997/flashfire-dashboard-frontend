@@ -22,7 +22,7 @@ const statsData = [
     color: "text-emerald-600",
   },
   {
-    value: "100K+",
+    value: "300K+",
     label: "Applications Sent",
     icon: <Users className="w-5 h-5" />,
     color: "text-blue-600",
@@ -309,4 +309,5 @@ export default function LoginPage({
     </div>
   )
 }
+
 
