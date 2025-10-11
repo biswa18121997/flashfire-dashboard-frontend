@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useResumeStore } from "../store/useResumeStore";
+import { useJobsSessionStore } from "../../../state_management/JobsSessionStore";
 
 interface WorkExperienceItem {
     id: string;
@@ -73,6 +74,7 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
     changedFields,
 }) => {
     const { setCurrentView: setCurrentResumeView } = useResumeStore();
+    const { refreshJobByMongoId } = useJobsSessionStore(); // Get the refresh function from store
     // Helper to check if a field has changed
     const isFieldChanged = (field: string) => changedFields.has(field);
 
@@ -457,6 +459,8 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
             const apiUrl =
                 import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+            console.log("Saving changes for job ID:", jobId);
+
             const response = await fetch(`${apiUrl}/saveChangedSession`, {
                 method: "POST",
                 headers: {
@@ -468,26 +472,40 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
                     finalChanges: finalChanges,
                 }),
             });
-            alert("Changes saved successfully");
-            //   setCurrentResumeView("editor");
+            
+            if (response.ok) {
+                console.log("Changes saved successfully, now refreshing job data...");
+                
+                // After saving successfully, refresh the job from backend in the background
+                // This happens seamlessly without any loaders
+                if (jobId && refreshJobByMongoId) {
+                    try {
+                        // Call the new backend route to fetch updated job data
+                        // This will update session storage with the latest changesMade from DB
+                        await refreshJobByMongoId(jobId);
+                        console.log("Job data refreshed successfully in session storage");
+                    } catch (err) {
+                        console.error('Error refreshing job in background:', err);
+                    }
+                }
+                
+                alert("Changes saved successfully");
+            } else {
+                const errorText = await response.text();
+                console.error("Failed to save changes:", errorText);
+                alert("Failed to save changes");
+            }
         } catch (error) {
             console.error("Error during comparison change:", error);
             console.log("Error during comparison change:", error);
+            alert("Error saving changes");
         }
-        console.log("hi", "original", finalChanges);
-        console.log("hi", "optimized", startingContent);
+        // console.log("hi", "original", finalChanges);
+        // console.log("hi", "optimized", startingContent);
     };
 
     return (
         <div className="space-y-8 p-6 bg-gray-50 rounded-lg">
-            <div className="flex justify-center">
-                <button
-                    onClick={handleComparisonChange}
-                    className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                >
-                    show changes in dashboard
-                </button>
-            </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 📊 Optimization Changes Summary
             </h2>
@@ -948,14 +966,14 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
                     </div>
                 </div>
             )}
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
                 <button
                     onClick={handleComparisonChange}
                     className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
                 >
                     show changes in dashboard
                 </button>
-            </div>
+            </div> */}
             {/* Summary Note */}
             {(personalInfoChanged ||
                 summaryChanged ||

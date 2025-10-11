@@ -24,7 +24,7 @@ export const useUserJobs = () => {
 };
 
 export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed to false - never show loading
   const context = useContext(UserContext);
   const navigate = useNavigate();
   
@@ -41,17 +41,13 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loading: storeLoading 
   } = useJobsSessionStore();
   
-  // Check if we need to fetch fresh data
-  const shouldFetch = useShouldFetchJobs(userDetails?.email);
-  
+  // Always fetch fresh data in the background on mount or when user changes
   useEffect(() => {
-    if (token && userDetails && shouldFetch) {
-      fetchJobs();
-    } else if (userDetails?.email && !shouldFetch) {
-      // Data is fresh in session storage, just set loading to false
-      setLoading(false);
+    if (userDetails?.email) {
+      // Always fetch in background, regardless of cache status
+      fetchJobsInBackground();
     }
-  }, [token, userDetails, shouldFetch]);
+  }, [userDetails?.email, token, role]);
   
   useEffect(() => {
     if (userDetails?.email) {
@@ -59,10 +55,9 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [userDetails?.email, setUserEmail]);
 
-  const fetchJobs = async () => {
-    console.log("Role is ", role);
-    setLoading(true);
-    setStoreLoading(true);
+  const fetchJobsInBackground = async () => {
+    console.log("🔄 Fetching jobs in background for role:", role);
+    // Don't set loading states - keep showing cached data
     
     try {
       console.log("Fetching jobs...", userDetails.email);
@@ -78,7 +73,7 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
         );
         data = await res.json();
-        console.log("got job data", data);
+        console.log("✅ Got job data (operations):", data?.allJobs?.length, "jobs");
       } else {
         console.log("Fetching jobs with token:", token);
         console.log(
@@ -99,10 +94,9 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
 
         console.log("Response status:", res.status);
-        console.log("Response headers:", res.headers);
 
         data = await res.json();
-        console.log("Fetched jobs response:", data);
+        console.log("✅ Fetched jobs response:", data?.allJobs?.length, "jobs");
 
         if (
             data?.message == "Token or user details missing" ||
@@ -117,7 +111,7 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 if (refreshSuccess) {
                     // Retry the request with new token
                     console.log("Token refreshed, retrying job fetch...");
-                    setTimeout(() => fetchJobs(), 100);
+                    setTimeout(() => fetchJobsInBackground(), 100);
                     return;
                 }
             }
@@ -128,15 +122,13 @@ export const UserJobsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       
-      // Store in session storage
-      console.log("Setting jobs in session storage:", data?.allJobs);
+      // Store in session storage - this updates the UI automatically
+      console.log("💾 Updating session storage with fresh data");
       setJobs(data?.allJobs || []);
       
     } catch (err) {
-      console.error('Error fetching jobs:', err);
-    } finally {
-      setLoading(false);
-      setStoreLoading(false);
+      console.error('❌ Error fetching jobs:', err);
+      // Don't clear existing data on error - keep showing cached data
     }
   };
 
