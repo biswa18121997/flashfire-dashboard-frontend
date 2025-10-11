@@ -187,9 +187,9 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
             {/* Main Header */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h4 className="text-lg font-semibold text-gray-900">
+                    {/* <h4 className="text-lg font-semibold text-gray-900">
                         Optimization Changes Summary
-                    </h4>
+                    </h4> */}
                 </div>
 
                 {/* Vertical sections with horizontal comparison */}
