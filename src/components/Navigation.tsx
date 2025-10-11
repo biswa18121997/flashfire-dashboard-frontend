@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Briefcase, FileText, User, LogOut, ChevronDown, Edit2Icon, Building2, ChevronRight, Pencil, Save, X } from 'lucide-react';
+import { Home, Briefcase, FileText, User, LogOut, ChevronDown, Edit2Icon } from 'lucide-react';
 import { UserContext } from '../state_management/UserContext.tsx';
 import { useUserProfile } from "../state_management/ProfileContext";
 import { useOperationsStore } from "../state_management/Operations.ts";

@@ -23,6 +23,7 @@ import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
 import { ResumePreviewMedical } from "./components/ResumePreviewMedical";
 import { useJobsSessionStore } from "../../state_management/JobsSessionStore";
+import Maker from "./components/Maker";
 import "./index.css"; //
 
 // Type definitions remain the same
@@ -110,6 +111,7 @@ function AccessKeyEditor() {
 
     const performUpdate = async () => {
         if (!resume_id || !hasChanges) return;
+        console.log("resume_id", resume_id);
         try {
             setStatus("saving");
             const res = await fetch(`${apiUrl}/api/update-unlock-key`, {
@@ -200,12 +202,14 @@ function App() {
     const [searchParams] = useSearchParams();
     const { jobId } = useParams<{ jobId: string }>();
     const startWithEditor = searchParams.get("view") === "editor";
+    const resumeFilename = searchParams.get("resume");
+    const clientName = searchParams.get("client");
 
     // Authentication state
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState<string>("");
     const [token, setToken] = useState<string>("");
-    const [authView, setAuthView] = useState<"login" | "admin" | "resume">(
+    const [authView, setAuthView] = useState<"login" | "admin" | "resume" | "maker">(
         "login"
     );
     const { versionV, setVersion } = PreviewStore();
@@ -241,6 +245,7 @@ function App() {
         resetStore,
         loadLastSelectedResume,
         clearLastSelectedResume,
+        setLastSelectedResume,
         debugLocalStorage,
         // setUserId,
         showPublications,
@@ -259,8 +264,8 @@ function App() {
         lockAllSections,
         checkAdminAndUnlock,
         setResumeId,
-        // setAccessKey,
         resume_id,
+        // setAccessKey,
     } = useResumeUnlockStore();
 
     const [showParseModal, setShowParseModal] = useState(false);
@@ -679,10 +684,20 @@ function App() {
         console.log("showPublications state changed to:", showPublications);
     }, [showPublications]);
 
-    // Handle jobId from URL
+    // Handle jobId from URL (only for regular resumes, not client resumes)
     useEffect(() => {
+        // Don't override resume_id if it's already set from client resume
+        const currentClientId = localStorage.getItem('currentClientId');
+        const currentResumeId = localStorage.getItem('currentResumeId');
+        
+        // If we have client resume info in localStorage, don't use jobId from URL
+        if (currentClientId && currentResumeId) {
+            console.log("Client resume already loaded, ignoring jobId from URL");
+            return;
+        }
+        
         if (jobId && jobId !== resume_id) {
-            console.log("Setting resume ID from URL:", jobId);
+            console.log("Setting resume ID from URL (regular resume):", jobId);
             setResumeId(jobId);
         }
     }, [jobId, resume_id, setResumeId]);
@@ -708,6 +723,92 @@ function App() {
         loadLastSelectedResume,
         debugLocalStorage,
     ]);
+
+    // Load client resume data when resume filename and client are provided
+    useEffect(() => {
+        const loadClientResume = async () => {
+            if (resumeFilename && clientName && isAuthenticated && storeHydrated) {
+                console.log("Loading client resume:", { resumeFilename, clientName });
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+                    
+                    // Find the client and resume
+                    const clientsResponse = await fetch(`${apiUrl}/api/clients`);
+                    if (!clientsResponse.ok) throw new Error('Failed to fetch clients');
+                    
+                    const clients = await clientsResponse.json();
+                    const client = clients.find((c: any) => c.name === clientName);
+                    
+                    if (!client) {
+                        console.error('Client not found:', clientName);
+                        return;
+                    }
+                    
+                    const resume = client.resumes.find((r: any) => r.filename === resumeFilename);
+                    if (!resume) {
+                        console.error('Resume not found:', resumeFilename);
+                        return;
+                    }
+                    
+                    // Get resume data using the correct endpoint
+                    const resumeResponse = await fetch(`${apiUrl}/api/clients/${client._id}/resumes/${resume._id}/data`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    if (!resumeResponse.ok) throw new Error('Failed to fetch resume data');
+                    
+                    const responseData = await resumeResponse.json();
+                    const resumeData = responseData.resume.data;
+                    const checkboxStates = responseData.resume.checkboxStates;
+                    
+                    // Transform backend data structure to frontend format
+                    // Use only firstName as it contains the full name
+                    const transformedResumeData = {
+                        ...resumeData,
+                        personalInfo: {
+                            name: resumeData.personalInfo.firstName || clientName,
+                            title: resumeData.personalInfo.title || '',
+                            phone: resumeData.personalInfo.phone || '',
+                            email: resumeData.personalInfo.email || '',
+                            location: resumeData.personalInfo.location || '',
+                            linkedin: resumeData.personalInfo.linkedin || '',
+                            portfolio: resumeData.personalInfo.portfolio || '',
+                            github: resumeData.personalInfo.github || ''
+                        }
+                    };
+                    
+                    setLastSelectedResume(transformedResumeData, resume._id);
+                    setResumeId(resume._id);  // Use ResumeIndex _id, not filename!
+                    
+                    // Store client and resume info for saving
+                    localStorage.setItem('currentClientId', client._id);
+                    localStorage.setItem('currentResumeId', resume._id);
+                    
+                    // Set checkbox states from the response
+                    if (checkboxStates) {
+                        setShowSummary(checkboxStates.showSummary ?? true);
+                        setShowProjects(checkboxStates.showProjects ?? false);
+                        setShowLeadership(checkboxStates.showLeadership ?? false);
+                        setShowPublications(checkboxStates.showPublications ?? false);
+                    }
+                    
+                    console.log('Client resume loaded successfully:', { 
+                        clientName, 
+                        displayName: resume.displayName,
+                        filename: resumeFilename 
+                    });
+                    
+                } catch (error) {
+                    console.error('Error loading client resume:', error);
+                }
+            }
+        };
+        
+        loadClientResume();
+    }, [resumeFilename, clientName, isAuthenticated, storeHydrated, setResumeData, setBaseResume, setResumeId]);
 
     // Fetch job description from backend when jobId is available
     const fetchJobDescription = async (jobId: string) => {
@@ -874,6 +975,96 @@ function App() {
         // Admin users will only see the resume preview without editing capabilities
     };
 
+    // Handle editing client resume from Maker component
+    const handleEditClientResume = async (resume: any, client: any) => {
+        try {
+            if (!resume._id) {
+                console.error('Resume _id is undefined!');
+                alert('Error: Resume ID is missing. Please try again.');
+                return;
+            }
+            
+            const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+            
+            // Get client resume data using the correct endpoint
+            const resumeResponse = await fetch(`${apiUrl}/api/clients/${client._id}/resumes/${resume._id}/data`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!resumeResponse.ok) throw new Error('Failed to fetch resume data');
+            
+            const responseData = await resumeResponse.json();
+            console.log('Response data structure:', responseData);
+            
+            // Extract resume data from the response
+            const resumeData = responseData.resume.data;
+            const resumeIndex = responseData.resumeIndex;
+            const checkboxStates = responseData.resume.checkboxStates;
+            
+            console.log('Resume data:', resumeData);
+            console.log('Checkbox states:', checkboxStates);
+            
+            // Transform backend data structure to frontend format
+            // Use only firstName as it contains the full name
+            const transformedResumeData = {
+                ...resumeData,
+                personalInfo: {
+                    name: resumeData.personalInfo.firstName || client.name,
+                    title: resumeData.personalInfo.title || '',
+                    phone: resumeData.personalInfo.phone || '',
+                    email: resumeData.personalInfo.email || '',
+                    location: resumeData.personalInfo.location || '',
+                    linkedin: resumeData.personalInfo.linkedin || '',
+                    portfolio: resumeData.personalInfo.portfolio || '',
+                    github: resumeData.personalInfo.github || ''
+                }
+            };
+            
+            console.log('Setting resume data:', transformedResumeData);
+            console.log('Personal info being set:', transformedResumeData.personalInfo);
+            
+            // Store the selected resume persistently for future use (same as ResumeSelectorModal)
+            setLastSelectedResume(transformedResumeData, resume._id);
+            setResumeId(resume._id);  // Use ResumeIndex _id, not filename!
+            
+            // Store client and resume info for saving
+            localStorage.setItem('currentClientId', client._id);
+            localStorage.setItem('currentResumeId', resume._id);
+            
+            // Set checkbox states from the response
+            if (checkboxStates) {
+                console.log('Setting checkbox states:', checkboxStates);
+                setShowSummary(checkboxStates.showSummary ?? true);
+                setShowProjects(checkboxStates.showProjects ?? false);
+                setShowLeadership(checkboxStates.showLeadership ?? false);
+                setShowPublications(checkboxStates.showPublications ?? false);
+            }
+            
+            // Switch to resume editing view
+            setAuthView("resume");
+            setCurrentResumeView("editor");
+            
+            // Debug: Check what's in the store after setting
+            setTimeout(() => {
+                console.log('Store resumeData after setting:', resumeData);
+                console.log('Store personalInfo after setting:', resumeData.personalInfo);
+            }, 100);
+            
+            console.log('Client resume loaded successfully for editing:', { 
+                clientName: client.name, 
+                displayName: resume.displayName,
+                filename: resume.filename 
+            });
+            
+        } catch (error) {
+            console.error('Error loading client resume for editing:', error);
+            alert('Error loading resume for editing. Please try again.');
+        }
+    };
+
     // Generate dynamic filename based on name
     const generateFilename = (data: typeof resumeData) => {
         const name = data.personalInfo.name || "Resume";
@@ -1005,9 +1196,27 @@ function App() {
             const filename = `${safeName}_resume.pdf`;
             const apiUrl =
                 import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+            
+            // Transform frontend data back to backend format for saving
+            // Store full name in firstName, leave lastName empty
+            const backendResumeData = {
+                ...resumeData,
+                personalInfo: {
+                    firstName: name || '',
+                    lastName: '',
+                    title: resumeData.personalInfo.title || '',
+                    phone: resumeData.personalInfo.phone || '',
+                    email: resumeData.personalInfo.email || '',
+                    location: resumeData.personalInfo.location || '',
+                    linkedin: resumeData.personalInfo.linkedin || '',
+                    portfolio: resumeData.personalInfo.portfolio || '',
+                    github: resumeData.personalInfo.github || ''
+                }
+            };
+            
             const saveData = {
                 filename,
-                data: resumeData,
+                data: backendResumeData,
                 checkboxStates: {
                     showSummary,
                     showProjects,
@@ -1018,25 +1227,49 @@ function App() {
             };
             console.log("Saving resume with data:", saveData);
 
-            const response = await fetch(`${apiUrl}/api/save-resume`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(saveData),
-            });
+            // Check if we're editing a client resume
+            const currentClientId = localStorage.getItem('currentClientId');
+            const currentResumeId = localStorage.getItem('currentResumeId');
+            
+            if (currentClientId && currentResumeId) {
+                // This is a client resume, use the client resume update endpoint
+                console.log("Updating client resume:", { clientId: currentClientId, resumeId: currentResumeId });
+                
+                const response = await fetch(`${apiUrl}/api/clients/${currentClientId}/resumes/${currentResumeId}/data`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        data: backendResumeData,
+                        checkboxStates: {
+                            showSummary,
+                            showProjects,
+                            showLeadership,
+                            showPublications,
+                        }
+                    }),
+                });
 
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || "Failed to save resume");
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || "Failed to update client resume");
+                }
+
+                console.log("Client resume updated:", result);
+            } else {
+                // Regular resume save
+                const response = await fetch(`${apiUrl}/api/save-resume`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(saveData),
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || "Failed to save resume");
+                }
+
+                console.log("Resume saved:", result);
             }
-
-            console.log(
-                "Resume JSON saved:",
-                filename,
-                "Resume ID:",
-                result.resume_id
-            );
-            // Optionally store resume_id in state or context for later use
-            // setResumeId(result.resume_id);
 
             setTimeout(() => {
                 setIsSaved(false);
@@ -1473,6 +1706,10 @@ function App() {
         );
     }
 
+    if (authView === "maker") {
+        return <Maker onEditResume={handleEditClientResume} />;
+    }
+
     return (
         <>
             <div className="min-h-screen bg-gray-50">
@@ -1481,7 +1718,7 @@ function App() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
-                                    Professional Resume Builder Portal
+                                    Professional Resume Optimizer Portal
                                 </h1>
                                 <p className="text-gray-600 mt-1">
                                     Edit sections on the left, see live preview
@@ -1537,6 +1774,52 @@ function App() {
                                             />
                                         </svg>
                                         Dashboard
+                                    </button>
+                                )}
+
+                                {/* Back to Maker Button - Only for Admin */}
+                                {userRole === "admin" && (
+                                    <button
+                                        onClick={() => setAuthView("maker")}
+                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                                    >
+                                        <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 19l-7-7 7-7"
+                                            />
+                                        </svg>
+                                        Back to Maker
+                                    </button>
+                                )}
+
+                                {/* Maker Button - Only for Admin */}
+                                {userRole === "admin" && (
+                                    <button
+                                        onClick={() => setAuthView("maker")}
+                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                                    >
+                                        <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                            />
+                                        </svg>
+                                        Resume Maker
                                     </button>
                                 )}
 
@@ -1674,6 +1957,7 @@ function App() {
                                     sectionName="Resume is locked"
                                 >
                                     <PersonalInfo
+                                        key={resume_id || 'default'}
                                         data={resumeData.personalInfo}
                                         onChange={updatePersonalInfo}
                                     />
@@ -2006,6 +2290,7 @@ function App() {
                                     </div>
                                     {versionV === 0 ? (
                                         <ResumePreview
+                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
@@ -2022,6 +2307,7 @@ function App() {
 
                                     {versionV === 1 ? (
                                         <ResumePreview1
+                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
@@ -2037,6 +2323,7 @@ function App() {
 
                                     {versionV === 2 ? (
                                         <ResumePreviewMedical
+                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
