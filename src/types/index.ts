@@ -1,6 +1,7 @@
 export type JobStatus = 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'deleted';
 
 export interface Job {
+  _id?: string; // MongoDB _id
   jobID: string;
   jobTitle: string;
   companyName: string;
@@ -14,6 +15,12 @@ export interface Job {
   userID?: string; // Add user association
   createdAt: string;
   updatedAt: string;
+  // Optional, populated when optimizer saves comparison
+  changesMade?: any;
+  timeline?: string[];
+  operatorName?: string;
+  operatorEmail?: string;
+  appliedDate?: string | null;
 }
 
 export interface OptimizedResume {

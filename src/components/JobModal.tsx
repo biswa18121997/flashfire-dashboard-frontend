@@ -665,12 +665,12 @@ useEffect(() => {
             icon: TimerIcon,
             color: "bg-brown-800 text-orange-700 border-orange-200",
         },
-        // {
-        //     id: "changes",
-        //     label: "Changes Made",
-        //     icon: GitCommit,
-        //     color: "bg-brown-800 text-orange-700 border-orange-200",
-        // },
+        {
+            id: "changes",
+            label: "Changes Made",
+            icon: GitCommit,
+            color: "bg-brown-800 text-orange-700 border-orange-200",
+        },
     ] as const;
 
     const renderContent = () => {
@@ -1290,25 +1290,48 @@ useEffect(() => {
                                 </p>
                             </div>
                         </div>
-{/*                         {role == "operations" ? (
-                            // <button
-                            //     onClick={() => {
-                            //         window.open(
-                            //             `/optimize/${jobDetails._id}?view=editor`,
-                            //             "_blank"
-                            //         );
-                            //     }}
-                            //     className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700"
-                            // >
-                            //     Optimize resume
-                            // </button>
-                        ) : null} */}
-                        <button
-                            onClick={() => setShowJobModal(false)}
-                            className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div className="flex items-center space-x-4">
+                            {role == "operations" ? (
+                                <button
+                                    onClick={async () => {
+                                        // Try _id first, then fall back to jobID
+                                        const mongoId = jobDetails._id;
+                                        const jobId = jobDetails.jobID;
+                                        
+                                        // Prefer _id if available, otherwise use jobID
+                                        const idToUse = mongoId || jobId;
+                                        
+                                        if (!idToUse) {
+                                            console.error('No ID found in job details:', jobDetails);
+                                            toastUtils.error('Job ID not found. Please refresh the page and try again.');
+                                            return;
+                                        }
+                                        
+                                        // Use appropriate query parameter
+                                        const queryParam = mongoId ? 'id' : 'jobId';
+                                        const optimizeUrl = `${window.location.origin}/optimize/${idToUse}?view=editor&${queryParam}=${idToUse}`;
+                                        
+                                        // Copy URL to clipboard
+                                        try {
+                                            await navigator.clipboard.writeText(optimizeUrl);
+                                            toastUtils.success("Optimize URL copied to clipboard!");
+                                        } catch (error) {
+                                            console.error('Failed to copy URL:', error);
+                                            toastUtils.error("Failed to copy URL to clipboard");
+                                        }
+                                    }}
+                                    className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700 px-4 py-2"
+                                >
+                                    Copy Optimize URL
+                                </button>
+                            ) : null}
+                            <button
+                                onClick={() => setShowJobModal(false)}
+                                className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1348,12 +1371,12 @@ useEffect(() => {
                                     icon: TimerIcon,
                                     color: "bg-brown-800 text-orange-700 border-orange-200",
                                 },
-                                // {
-                                //     id: "changes",
-                                //     label: "Changes Made",
-                                //     icon: GitCommit,
-                                //     color: "bg-brown-800 text-red-700 border-orange-300",
-                                // },
+                                {
+                                    id: "changes",
+                                    label: "Changes Made",
+                                    icon: GitCommit,
+                                    color: "bg-brown-800 text-red-700 border-orange-300",
+                                },
                             ].map((section: any) => {
                                 const Icon = section.icon;
                                 const isActive = activeSection === section.id;
