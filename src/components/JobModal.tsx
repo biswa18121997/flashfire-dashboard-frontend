@@ -1260,6 +1260,7 @@ useEffect(() => {
                                 //     No changes available, please optimize your
                                 //     resume.
                                 // </div>
+                                null
                             )}
                         </div>
                     </div>
