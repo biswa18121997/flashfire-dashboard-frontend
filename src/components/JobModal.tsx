@@ -246,6 +246,10 @@ export default function JobModal({
     const setData = ctx?.setData ?? null;
     const currentUser = ctx?.userDetails ?? {};
 
+    const getCompanyDomain = (companyName: string) => {
+        return companyName.replace(/\s+/g, '').toLowerCase();
+    };
+
     const { role, name: operationsUserName, email: operationsUserEmail } = useOperationsStore();
 
     // NEW (paste-to-upload buffer)
@@ -685,7 +689,7 @@ useEffect(() => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <img
-                                    src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(
+                                    src={`https://www.google.com/s2/favicons?domain=${getCompanyDomain(
                                         jobDetails.companyName
                                     )}.com&sz=64`}
                                     alt="Company Logo"
