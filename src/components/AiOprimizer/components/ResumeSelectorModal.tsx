@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ResumeData } from "../types/ResumeTypes";
 import { useResumeUnlockStore } from "../store/resumeStore";
 import { useResumeStore } from "../store/useResumeStore";
-import { Lock, X, AlertCircle } from "lucide-react";
+import { Lock, X, AlertCircle, Eye, EyeOff } from "lucide-react";
 import {
     getStoredPin,
     storePin,
@@ -36,7 +36,7 @@ export default function ResumeSelectorModal({
     const [isAdmin, setIsAdmin] = useState(false);
     const { setResumeId } = useResumeUnlockStore();
     const { setLastSelectedResume } = useResumeStore();
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
 
     useEffect(() => {
         const userRole = localStorage.getItem("role");
@@ -63,14 +63,20 @@ export default function ResumeSelectorModal({
         const fetchResumes = async () => {
             try {
                 let url = `${apiUrl}/api/resumes`; // default (all)
-                if (version == 1) {
-                    url = `${apiUrl}/api/resumes/v1`;
-                }
-                if (version == 2) {
-                    url = `${apiUrl}/api/resumes/v2`;
+
+                // For admin users, use specific version endpoints
+                if (isAdmin) {
+                    if (version == 1) url = `${apiUrl}/api/resumes/v1`;
+                    if (version == 2) url = `${apiUrl}/api/resumes/v2`;
+                } else {
+                    // Non-admin users see all non-hidden resumes routed correctly
+                    url = `${apiUrl}/api/resumes/all`;
                 }
 
-                const res = await fetch(url);
+                const userRole = localStorage.getItem("role") || "";
+                const res = await fetch(url, {
+                    headers: { "user-role": userRole },
+                });
                 const data = await res.json();
                 setResumes(data);
                 setFilteredResumes(data);
@@ -105,6 +111,30 @@ export default function ResumeSelectorModal({
         // Auto-fill PIN if stored
         const storedPin = getStoredPin();
         setUnlockKey(storedPin || "");
+    };
+
+    const handleToggleVisibility = async (resumeId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const res = await fetch(`${apiUrl}/api/toggle-resume-visibility`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ resume_id: resumeId }),
+            });
+            const data = await res.json();
+            if (data?.error) {
+                console.error("Error toggling visibility:", data.error);
+                return;
+            }
+            setResumes((prev) =>
+                prev.map((r) => (r._id === resumeId ? { ...r, hidden: data.hidden } : r))
+            );
+            setFilteredResumes((prev) =>
+                prev.map((r) => (r._id === resumeId ? { ...r, hidden: data.hidden } : r))
+            );
+        } catch (err) {
+            console.error("Error toggling visibility:", err);
+        }
     };
 
     const handleUnlock = async () => {
@@ -243,10 +273,38 @@ export default function ResumeSelectorModal({
                                 {filteredResumes.map((r) => (
                                     <li
                                         key={r._id}
-                                        className="p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer transition-colors"
+                                        className={`${r.hidden ? "bg-red-50 border border-red-200" : "bg-gray-50"} p-3 rounded hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-between`}
                                         onClick={() => handleResumeClick(r._id)}
                                     >
-                                        {r.firstName} {r.lastName}
+                                        <span className="flex-1">
+                                            {r.firstName} {r.lastName}
+                                            {r.hidden && (
+                                                <span className="text-red-600 font-medium ml-2">(Hidden)</span>
+                                            )}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {/* Version badge */}
+                                            <span
+                                                className={
+                                                    r.V === 2
+                                                        ? "px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 border border-red-200"
+                                                        : r.V === 1
+                                                        ? "px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800 border border-orange-200"
+                                                        : "px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200"
+                                                }
+                                            >
+                                                {r.V === 2 ? "Medical resume" : r.V === 1 ? "V1 resume" : "Normal"}
+                                            </span>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={(e) => handleToggleVisibility(r._id, e)}
+                                                    className={`${r.hidden ? "text-red-600 hover:bg-red-200" : "text-gray-500 hover:bg-gray-200"} p-1 rounded-full`}
+                                                    title={r.hidden ? "Show resume" : "Hide resume"}
+                                                >
+                                                    {r.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            )}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
