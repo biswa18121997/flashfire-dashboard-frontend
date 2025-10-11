@@ -9,11 +9,12 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
         !changesMade.startingContent ||
         !changesMade.finalChanges
     ) {
-        // return (
-        //     <div className="text-gray-500 italic">
-        //         No changes available, please optimize your resume.
-        //     </div>
-        // );
+        return (
+            // <div className="text-gray-500 italic">
+            //     No changes available, please optimize your resume.
+            // </div>
+            null
+        );
     }
 
     const { startingContent, finalChanges } = changesMade;
@@ -36,9 +37,9 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
     ]);
 
     // Helper function to render text
-    const renderText = (text: string) => {
-        return <div className="text-sm whitespace-pre-wrap">{text}</div>;
-    };
+    // const renderText = (text: string) => {
+    //     return <div className="text-sm whitespace-pre-wrap">{text}</div>;
+    // };
 
     // Helper function to render array items
     const renderArrayItem = (item: any, index: number) => {
@@ -187,9 +188,9 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
             {/* Main Header */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    {/* <h4 className="text-lg font-semibold text-gray-900">
+                    <h4 className="text-lg font-semibold text-gray-900">
                         Optimization Changes Summary
-                    </h4> */}
+                    </h4>
                 </div>
 
                 {/* Vertical sections with horizontal comparison */}
@@ -293,7 +294,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
             </div>
 
             {/* Summary of changes */}
-            {changesMade.changedSections && (
+            {/* {changesMade.changedSections && (
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <h5 className="font-medium text-blue-900 mb-2">
                         Sections Modified
@@ -315,7 +316,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
                         </p>
                     )}
                 </div>
-            )}
+            )} */}
         </div>
     );
 };
