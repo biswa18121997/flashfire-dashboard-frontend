@@ -211,7 +211,7 @@ function App() {
     const { versionV, setVersion } = PreviewStore();
 
     // Get session store for updating job cache
-    const { updateJob } = useJobsSessionStore();
+    const { updateJob, refreshJobByMongoId } = useJobsSessionStore();
 
     const {
         resumeData,
@@ -1258,6 +1258,291 @@ function App() {
         }
     };
 
+    const autoSaveChangesToDashboard = async (originalData: any, optimizedData: any) => {
+        try {
+            const apiUrl =
+                import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+            // Get only changed fields
+            const getChangedFieldsOnly = () => {
+                const startingContent: any = {};
+                const finalChanges: any = {};
+
+                // Personal Info - only changed fields
+                const personalInfoChanged = Object.keys(
+                    originalData.personalInfo
+                ).filter(
+                    (key) =>
+                        originalData.personalInfo[
+                            key as keyof typeof originalData.personalInfo
+                        ] !==
+                        optimizedData.personalInfo[
+                            key as keyof typeof optimizedData.personalInfo
+                        ]
+                );
+
+                if (personalInfoChanged.length > 0) {
+                    startingContent.personalInfo = {};
+                    finalChanges.personalInfo = {};
+                    personalInfoChanged.forEach((key) => {
+                        const typedKey = key as keyof typeof originalData.personalInfo;
+                        startingContent.personalInfo[key] =
+                            originalData.personalInfo[typedKey];
+                        finalChanges.personalInfo[key] =
+                            optimizedData.personalInfo[typedKey];
+                    });
+                }
+
+                // Summary - only if changed
+                if (originalData.summary !== optimizedData.summary) {
+                    startingContent.summary = originalData.summary;
+                    finalChanges.summary = optimizedData.summary;
+                }
+
+                // Work Experience - only changed items
+                const changedWorkExp = originalData.workExperience
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.workExperience[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedWorkExp.length > 0) {
+                    startingContent.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Projects - only changed items
+                const changedProjects = originalData.projects
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.projects[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedProjects.length > 0) {
+                    startingContent.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Skills - only changed categories
+                const changedSkills = originalData.skills
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.skills[idx];
+                        if (!opt) return null;
+
+                        if (orig.category !== opt.category || orig.skills !== opt.skills) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    category: orig.category,
+                                    skills: orig.skills,
+                                },
+                                optimized: {
+                                    category: opt.category,
+                                    skills: opt.skills,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedSkills.length > 0) {
+                    startingContent.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Leadership - only changed items
+                const changedLeadership = originalData.leadership
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.leadership[idx];
+                        if (!opt) return null;
+
+                        if (orig.title !== opt.title || orig.organization !== opt.organization) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    title: orig.title,
+                                    organization: orig.organization,
+                                },
+                                optimized: {
+                                    title: opt.title,
+                                    organization: opt.organization,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedLeadership.length > 0) {
+                    startingContent.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Education - only changed items
+                const changedEducation = originalData.education
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.education[idx];
+                        if (!opt) return null;
+
+                        const fields = ["institution", "location", "degree", "field", "additionalInfo"];
+                        const hasChanges = fields.some((field) => orig[field] !== opt[field]);
+
+                        if (hasChanges) {
+                            const originals: any = {};
+                            const changes: any = {};
+
+                            fields.forEach((field) => {
+                                if (orig[field] !== opt[field]) {
+                                    originals[field] = orig[field];
+                                    changes[field] = opt[field];
+                                }
+                            });
+
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedEducation.length > 0) {
+                    startingContent.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                return { startingContent, finalChanges };
+            };
+
+            const { startingContent, finalChanges } = getChangedFieldsOnly();
+
+            console.log("Auto-saving changes for job ID:", jobId);
+
+            const response = await fetch(`${apiUrl}/saveChangedSession`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: jobId,
+                    startingContent: startingContent,
+                    finalChanges: finalChanges,
+                }),
+            });
+
+            if (response.ok) {
+                console.log("Changes auto-saved successfully, now refreshing job data...");
+                
+                // After saving successfully, refresh the job from backend
+                if (jobId && refreshJobByMongoId) {
+                    try {
+                        await refreshJobByMongoId(jobId);
+                        console.log("Job data refreshed successfully in session storage");
+                    } catch (err) {
+                        console.error('Error refreshing job in background:', err);
+                    }
+                }
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error("Failed to auto-save changes:", errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error("Error during auto-save:", error);
+            return false;
+        }
+    };
+
     const handleOptimizeWithAI = async () => {
         if (!jobDescription.trim()) {
             alert("Please enter a job description first.");
@@ -1288,25 +1573,27 @@ function App() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const optimizedData = await response.json();
+            const optimizedDataResult = await response.json();
 
             // Check if we got valid optimized data
             if (
-                optimizedData &&
-                (optimizedData.summary || optimizedData.workExperience)
+                optimizedDataResult &&
+                (optimizedDataResult.summary || optimizedDataResult.workExperience)
             ) {
                 // Store optimized data temporarily and show comparison view
-                setOptimizedData({
+                const newOptimizedData = {
                     ...resumeData,
-                    summary: optimizedData.summary || resumeData.summary,
+                    summary: optimizedDataResult.summary || resumeData.summary,
                     workExperience:
-                        optimizedData.workExperience ||
+                        optimizedDataResult.workExperience ||
                         resumeData.workExperience,
-                    skills: optimizedData.skills || resumeData.skills,
-                    education: optimizedData.education || resumeData.education,
+                    skills: optimizedDataResult.skills || resumeData.skills,
+                    education: optimizedDataResult.education || resumeData.education,
                     publications:
-                        optimizedData.publications || resumeData.publications,
-                });
+                        optimizedDataResult.publications || resumeData.publications,
+                };
+
+                setOptimizedData(newOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
                 
                 // Update job in session storage to reflect changes immediately
@@ -1314,12 +1601,21 @@ function App() {
                     updateJob(jobId, { 
                         updatedAt: new Date().toISOString()
                     });
-                    console.log("✅ Updated job in session storage to trigger re-render");
+                    console.log("Updated job in session storage to trigger re-render");
                 }
                 
-                alert(
-                    'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, newOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             } else {
                 alert(
                     "AI optimization failed. Please try again or edit your resume content manually."
@@ -1406,9 +1702,19 @@ function App() {
 
                 setOptimizedData(sampleOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
-                alert(
-                    'Demo mode: AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                
+                
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'Demo mode: AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'Demo mode: AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             }
         } catch (error) {
             console.error("Error optimizing resume:", error);
@@ -1436,9 +1742,19 @@ function App() {
 
             setOptimizedData(sampleOptimizedData);
             setCurrentResumeView("optimized"); // Automatically switch to optimized view
-            alert(
-                'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-            );
+            
+            
+            const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+            
+            if (saveSuccess) {
+                alert(
+                    'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                );
+            } else {
+                alert(
+                    'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                );
+            }
         } finally {
             setIsOptimizing(false);
         }
