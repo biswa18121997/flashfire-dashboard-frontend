@@ -2317,14 +2317,14 @@ function App() {
                                     {/* Job Details Display */}
                                     {jobTitle && companyName && (
                                         <div className="mt-4 p-3 bg-gray-50 rounded-md text-center">
-                                            <p className="text-sm text-gray-700 mb-2">
+                                            <p className="text-sm text-gray-700 mb-2 font-bold">
                                                 Optimizing for {resumeData.personalInfo?.name || "Unknown"}
                                             </p>
-                                            <p className="text-sm text-gray-600 mb-1">at</p>
-                                            <p className="text-sm text-gray-700">
+                                            <p className="text-sm text-gray-600 mb-1 font-bold">at</p>
+                                            <p className="text-sm text-gray-700 font-bold">
                                                 <span className="font-medium">Role:</span> {jobTitle}
                                             </p>
-                                            <p className="text-sm text-gray-700">
+                                            <p className="text-sm text-gray-700 font-bold">
                                                 <span className="font-medium">Company:</span> {companyName}
                                             </p>
                                         </div>
