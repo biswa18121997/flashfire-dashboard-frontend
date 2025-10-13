@@ -1,6 +1,7 @@
 import { ArrowLeftCircle, Trash2, HardDriveDownload } from "lucide-react";
 import React, { useEffect, useState, useContext } from "react";
 import { UserContext } from '../state_management/UserContext.js';
+import GuidePopup from "./GuidePopup"
 
 type PendingType = "optimized" | "coverLetter" | null;
 
@@ -66,6 +67,8 @@ export default function DocumentUpload() {
   const [coverList, setCoverList] = useState<Entry[]>([]);
   const [transcriptList, setTranscriptList] = useState([]);
 
+  const [showGuide, setShowGuide] = useState(false);
+
   // const [showMetaModal, setShowMetaModal] = useState<PendingType>(null);
   // const [pendingUploadType, setPendingUploadType] = useState<PendingType>(null);
   // const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -78,6 +81,7 @@ export default function DocumentUpload() {
     null
   );
   const [iframeError, setIframeError] = useState<string | null>(null);
+
 
   // ---- helpers ----
   const readAuth = () => {
@@ -148,6 +152,17 @@ export default function DocumentUpload() {
     if (!res.ok) throw new Error("Backend save failed");
     return res.json(); // -> { userDetails: {..., resumeLink, optimizedResumes, coverLetters } }
   };
+
+  const handleExit = () => {
+    setShowGuide(false);
+    localStorage.setItem("resumeOptimizerGuideSeen", "true");
+  };
+
+  useEffect(() => {
+    const isNewUser = !localStorage.getItem("resumeOptimizerGuideSeen");
+    if (isNewUser) setShowGuide(true);
+  }, []);
+
   useEffect(() => {
     const parsed = readAuth();
     if (!parsed) return;
@@ -529,79 +544,171 @@ export default function DocumentUpload() {
   // };
 
   // ---- Reusable Table (list view when View All Docs) ----
- const DocsTable = ({
-  items,
-  category,
-  onPick,
-}: {
-  items: Entry[];
-  category: "Resume" | "Cover Letter" | "Base";
-  onPick: (item: Entry) => void;
-}) => (
-  <div className="border rounded-lg overflow-hidden w-full">
-    {/* ---------- Desktop View ---------- */}
-    <div className="hidden sm:block">
-      <div className="grid grid-cols-10 bg-gray-100 text-sm font-semibold px-4 py-3">
-        <div className="col-span-6">Title</div>
-        <div className="col-span-2">Category</div>
-        {(activeTab !== "base" && activeTab !== "cover") && (
-          <div className="col-span-1">Job Links</div>
+  const DocsTable = ({
+    items,
+    category,
+    onPick,
+  }: {
+    items: Entry[];
+    category: "Resume" | "Cover Letter" | "Base";
+    onPick: (item: Entry) => void;
+  }) => (
+    <div className="border rounded-lg overflow-hidden w-full">
+      {showGuide && (
+        <GuidePopup
+          title="Resume Optimizer"
+          message="🧠 Here you can optimize your resume for each job automatically — get 100% ATS match and export as PDF."
+          onExit={handleExit}
+          position="optimizer"
+        />
+      )}
+
+      {/* ---------- Desktop View ---------- */}
+      <div className="hidden sm:block">
+        <div className="grid grid-cols-10 bg-gray-100 text-sm font-semibold px-4 py-3">
+          <div className="col-span-6">Title</div>
+          <div className="col-span-2">Category</div>
+          {(activeTab !== "base" && activeTab !== "cover") && (
+            <div className="col-span-1">Job Links</div>
+          )}
+          <div className="col-span-1 text-right">Quick Actions</div>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="px-4 py-6 text-sm text-gray-500">No documents yet.</div>
+        ) : (
+          <ul className="divide-y flex flex-col flex-col-reverse">
+            {items.map((it, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-10 items-center px-4 py-4 hover:bg-gray-50 cursor-pointer"
+                onClick={() => onPick(it)}
+                title="Click to preview"
+              >
+                {/* Title / Info */}
+                <div className="col-span-6 min-w-0">
+                  <p className="truncate">
+                    {category === "Base" || category === "Cover Letter"
+                      ? `${it.name || "Unnamed Resume"} — Added on: ${it.createdAt?.slice(0, 10) || "N/A"}`
+                      : `${it.jobRole || "—"} at ${it.companyName || "—"}`}
+                  </p>
+                </div>
+
+                {/* Category */}
+                <div className="col-span-2">{category}</div>
+
+                {/* Job link (for optimized resumes only) */}
+                <div className="col-span-1">
+                  {it.jobLink ? (
+                    <a
+                      href={it.jobLink.startsWith("http") ? it.jobLink : `https://${it.jobLink}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Click Here
+                    </a>
+                  ) : (
+                    ""
+                  )}
+                </div>
+
+                {/* Quick actions */}
+                <div className="col-span-1 flex justify-end">
+                  <a
+                    href={toRawPdfUrl(it?.url) || it.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-gray-700 hover:text-blue-600 p-2"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Download"
+                  >
+                    <DownloadIcon className="text-gray-700 hover:text-blue-600 m-2" />
+                  </a>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(
+                        it,
+                        category === "Base"
+                          ? "base"
+                          : category === "Resume"
+                            ? "optimized"
+                            : "cover"
+                      );
+                    }}
+                    className="text-gray-600 hover:text-red-600 m-2"
+                    title="Delete"
+                  >
+                    <Trash2 className="size-5" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
-        <div className="col-span-1 text-right">Quick Actions</div>
       </div>
 
-      {items.length === 0 ? (
-        <div className="px-4 py-6 text-sm text-gray-500">No documents yet.</div>
-      ) : (
-        <ul className="divide-y flex flex-col flex-col-reverse">
-          {items.map((it, i) => (
-            <li
+      {/* ---------- Mobile View ---------- */}
+      <div className="block sm:hidden divide-y">
+        {items.length === 0 ? (
+          <div className="px-4 py-6 text-sm text-gray-500 text-center">
+            No documents yet.
+          </div>
+        ) : (
+          items.map((it, i) => (
+            <div
               key={i}
-              className="grid grid-cols-10 items-center px-4 py-4 hover:bg-gray-50 cursor-pointer"
+              className="p-4 flex flex-col gap-2 bg-white hover:bg-gray-50 cursor-pointer transition"
               onClick={() => onPick(it)}
               title="Click to preview"
             >
-              {/* Title / Info */}
-              <div className="col-span-6 min-w-0">
-                <p className="truncate">
+              <div className="flex justify-between items-center">
+                <p className="font-semibold text-gray-800 truncate">
                   {category === "Base" || category === "Cover Letter"
-                    ? `${it.name || "Unnamed Resume"} — Added on: ${it.createdAt?.slice(0, 10) || "N/A"}`
+                    ? `${it.name || "Unnamed Resume"}`
                     : `${it.jobRole || "—"} at ${it.companyName || "—"}`}
                 </p>
-              </div>
-
-              {/* Category */}
-              <div className="col-span-2">{category}</div>
-
-              {/* Job link (for optimized resumes only) */}
-              <div className="col-span-1">
-                {it.jobLink ? (
-                  <a
-                    href={it.jobLink.startsWith("http") ? it.jobLink : `https://${it.jobLink}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Click Here
-                  </a>
-                ) : (
-                  ""
-                )}
-              </div>
-
-              {/* Quick actions */}
-              <div className="col-span-1 flex justify-end">
                 <a
                   href={toRawPdfUrl(it?.url) || it.link}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-gray-700 hover:text-blue-600 p-2"
+                  className="text-blue-600 hover:text-blue-800 text-lg"
                   onClick={(e) => e.stopPropagation()}
                   title="Download"
                 >
-                  <DownloadIcon className="text-gray-700 hover:text-blue-600 m-2" />
+                  ⬇️
                 </a>
+              </div>
 
+              {category === "Resume" && it.jobLink && (
+                <p className="text-sm text-blue-600 underline truncate">
+                  <a
+                    href={it.jobLink.startsWith("http") ? it.jobLink : `https://${it.jobLink}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {it.jobLink}
+                  </a>
+                </p>
+              )}
+
+              <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
+                <span>{category}</span>
+                <span>
+                  {it.createdAt
+                    ? new Date(it.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                    : "—"}
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -610,105 +717,22 @@ export default function DocumentUpload() {
                       category === "Base"
                         ? "base"
                         : category === "Resume"
-                        ? "optimized"
-                        : "cover"
+                          ? "optimized"
+                          : "cover"
                     );
                   }}
-                  className="text-gray-600 hover:text-red-600 m-2"
-                  title="Delete"
+                  className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
                 >
-                  <Trash2 className="size-5" />
+                  <Trash2 className="w-4 h-4" />
+                  Delete
                 </button>
               </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
-
-    {/* ---------- Mobile View ---------- */}
-    <div className="block sm:hidden divide-y">
-      {items.length === 0 ? (
-        <div className="px-4 py-6 text-sm text-gray-500 text-center">
-          No documents yet.
-        </div>
-      ) : (
-        items.map((it, i) => (
-          <div
-            key={i}
-            className="p-4 flex flex-col gap-2 bg-white hover:bg-gray-50 cursor-pointer transition"
-            onClick={() => onPick(it)}
-            title="Click to preview"
-          >
-            <div className="flex justify-between items-center">
-              <p className="font-semibold text-gray-800 truncate">
-                {category === "Base" || category === "Cover Letter"
-                  ? `${it.name || "Unnamed Resume"}`
-                  : `${it.jobRole || "—"} at ${it.companyName || "—"}`}
-              </p>
-              <a
-                href={toRawPdfUrl(it?.url) || it.link}
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-lg"
-                onClick={(e) => e.stopPropagation()}
-                title="Download"
-              >
-                ⬇️
-              </a>
-            </div>
-
-            {category === "Resume" && it.jobLink && (
-              <p className="text-sm text-blue-600 underline truncate">
-                <a
-                  href={it.jobLink.startsWith("http") ? it.jobLink : `https://${it.jobLink}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {it.jobLink}
-                </a>
-              </p>
-            )}
-
-            <div className="flex justify-between items-center text-sm text-gray-600 mt-1">
-              <span>{category}</span>
-              <span>
-                {it.createdAt
-                  ? new Date(it.createdAt).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(
-                    it,
-                    category === "Base"
-                      ? "base"
-                      : category === "Resume"
-                      ? "optimized"
-                      : "cover"
-                  );
-                }}
-                className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-);
+  );
 
 
   // ---- Reusable Preview Panel (iframe) ----

@@ -375,7 +375,7 @@ export default function ProfilePage() {
                     />
                 </Card>
 
-                {/* Education */}
+                {/* Educations */}
                 <Card
                     title="Education"
                     onEdit={() => handleEditClick("education")}
