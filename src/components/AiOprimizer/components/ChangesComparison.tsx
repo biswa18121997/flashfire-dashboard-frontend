@@ -500,20 +500,12 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
             console.log("Error during comparison change:", error);
             alert("Error saving changes");
         }
-        console.log("hi", "original", finalChanges);
-        console.log("hi", "optimized", startingContent);
+        // console.log("hi", "original", finalChanges);
+        // console.log("hi", "optimized", startingContent);
     };
 
     return (
         <div className="space-y-8 p-6 bg-gray-50 rounded-lg">
-            <div className="flex justify-center">
-                <button
-                    onClick={handleComparisonChange}
-                    className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                >
-                    show changes in dashboard
-                </button>
-            </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 📊 Optimization Changes Summary
             </h2>
@@ -974,14 +966,14 @@ export const ChangesComparison: React.FC<ChangesComparisonProps> = ({
                     </div>
                 </div>
             )}
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
                 <button
                     onClick={handleComparisonChange}
                     className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
                 >
                     show changes in dashboard
                 </button>
-            </div>
+            </div> */}
             {/* Summary Note */}
             {(personalInfoChanged ||
                 summaryChanged ||

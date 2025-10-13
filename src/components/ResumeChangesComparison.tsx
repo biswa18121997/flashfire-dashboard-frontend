@@ -1,3 +1,6 @@
+
+import React, { useState } from 'react';
+
 // Text diff utility functions
 const createDiff = (original: string, optimized: string) => {
     if (!original || !optimized) {
@@ -85,19 +88,33 @@ const renderDiffText = (diff: any[], isOptimized = false) => {
 };
 
 const ResumeChangesComparison = ({ changesMade }: any) => {
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
     if (
         !changesMade ||
         !changesMade.startingContent ||
         !changesMade.finalChanges
     ) {
         return (
-            <div className="text-gray-500 italic">
-                No changes available, please optimize your resume.
-            </div>
+            // <div className="text-gray-500 italic">
+            //     No changes available, please optimize your resume.
+            // </div>
+            null
         );
     }
 
     const { startingContent, finalChanges } = changesMade;
+
+    // Toggle section expansion
+    const toggleSection = (sectionKey: string) => {
+        const newExpandedSections = new Set(expandedSections);
+        if (newExpandedSections.has(sectionKey)) {
+            newExpandedSections.delete(sectionKey);
+        } else {
+            newExpandedSections.add(sectionKey);
+        }
+        setExpandedSections(newExpandedSections);
+    };
 
     // Get all unique keys from both objects
     const allKeys = new Set([
@@ -310,67 +327,91 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
                             return null;
                         }
 
+                        const isExpanded = expandedSections.has(key);
+
                         return (
                             <div key={key} className="space-y-4">
-                                {/* Section Header */}
-                                <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                                    <div className="text-gray-600">
-                                        {getSectionIcon(formatKeyName(key))}
+                                {/* Section Header with Toggle Button */}
+                                <div 
+                                    className="flex items-center justify-between pb-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors duration-200"
+                                    onClick={() => toggleSection(key)}
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <div className="text-gray-600">
+                                            {getSectionIcon(formatKeyName(key))}
+                                        </div>
+                                        <h5 className="text-lg font-semibold text-gray-800">
+                                            {formatKeyName(key)} Changes
+                                        </h5>
                                     </div>
-                                    <h5 className="text-lg font-semibold text-gray-800">
-                                        {formatKeyName(key)} Changes
-                                    </h5>
+                                    
+                                    {/* Toggle Button */}
+                                    <div className="flex items-center">
+                                        <svg 
+                                            className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
                                 </div>
 
-                                {/* Horizontal comparison within section */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Original Content */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                                            <span className="text-sm font-medium text-gray-700">
-                                                Old {formatKeyName(key)}:
-                                            </span>
+                                {/* Collapsible Content */}
+                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                                    isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+                                }`}>
+                                    {/* Horizontal comparison within section */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+                                        {/* Original Content */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center">
+                                                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    Old {formatKeyName(key)}:
+                                                </span>
+                                            </div>
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                {originalValue !== undefined ? (
+                                                    <div className="text-sm leading-relaxed">
+                                                        {renderValue(
+                                                            originalValue,
+                                                            true,
+                                                            optimizedValue
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-gray-400 italic">
+                                                        No original content
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                            {originalValue !== undefined ? (
-                                                <div className="text-sm leading-relaxed">
-                                                    {renderValue(
-                                                        originalValue,
-                                                        true,
-                                                        optimizedValue
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="text-gray-400 italic">
-                                                    No original content
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    {/* Optimized Content */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                                            <span className="text-sm font-medium text-gray-700">
-                                                Optimized {formatKeyName(key)}:
-                                            </span>
-                                        </div>
-                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                            {optimizedValue !== undefined ? (
-                                                <div className="text-sm leading-relaxed">
-                                                    {renderValue(
-                                                        optimizedValue,
-                                                        false,
-                                                        originalValue
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="text-gray-400 italic">
-                                                    No optimized content
-                                                </div>
-                                            )}
+                                        {/* Optimized Content */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center">
+                                                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    Optimized {formatKeyName(key)}:
+                                                </span>
+                                            </div>
+                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                                {optimizedValue !== undefined ? (
+                                                    <div className="text-sm leading-relaxed">
+                                                        {renderValue(
+                                                            optimizedValue,
+                                                            false,
+                                                            originalValue
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-gray-400 italic">
+                                                        No optimized content
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -381,7 +422,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
             </div>
 
             {/* Summary of changes */}
-            {changesMade.changedSections && (
+            {/* {changesMade.changedSections && (
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <h5 className="font-medium text-blue-900 mb-2">
                         Sections Modified
@@ -403,7 +444,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
                         </p>
                     )}
                 </div>
-            )}
+            )} */}
         </div>
     );
 };
