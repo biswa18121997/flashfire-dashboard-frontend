@@ -1,92 +1,6 @@
 
 import React, { useState } from 'react';
 
-// Text diff utility functions
-const createDiff = (original: string, optimized: string) => {
-    if (!original || !optimized) {
-        return [];
-    }
-
-    // Simple word-level diff algorithm
-    const originalWords = original.split(/(\s+)/);
-    const optimizedWords = optimized.split(/(\s+)/);
-    
-    const diff = [];
-    let i = 0, j = 0;
-    
-    while (i < originalWords.length || j < optimizedWords.length) {
-        if (i >= originalWords.length) {
-            // Only in optimized
-            diff.push({ type: 'added', content: optimizedWords[j] });
-            j++;
-        } else if (j >= optimizedWords.length) {
-            // Only in original
-            diff.push({ type: 'removed', content: originalWords[i] });
-            i++;
-        } else if (originalWords[i] === optimizedWords[j]) {
-            // Same word
-            diff.push({ type: 'unchanged', content: originalWords[i] });
-            i++;
-            j++;
-        } else {
-            // Different words - check if it's a simple change or addition/deletion
-            const nextMatch = optimizedWords.slice(j + 1).indexOf(originalWords[i]);
-            const prevMatch = originalWords.slice(i + 1).indexOf(optimizedWords[j]);
-            
-            if (nextMatch === 0) {
-                // Word was added in optimized
-                diff.push({ type: 'added', content: optimizedWords[j] });
-                j++;
-            } else if (prevMatch === 0) {
-                // Word was removed from original
-                diff.push({ type: 'removed', content: originalWords[i] });
-                i++;
-            } else {
-                // Word was changed
-                diff.push({ type: 'changed', content: originalWords[i], newContent: optimizedWords[j] });
-                i++;
-                j++;
-            }
-        }
-    }
-    
-    return diff;
-};
-
-const renderDiffText = (diff: any[], isOptimized = false) => {
-    return diff.map((part: any, index: number) => {
-        const key = `${index}-${part.type}`;
-        
-        switch (part.type) {
-            case 'added':
-                return isOptimized ? (
-                    <span key={key} className="bg-green-200 text-green-800 px-1 rounded">
-                        {part.content}
-                    </span>
-                ) : null;
-            case 'removed':
-                return !isOptimized ? (
-                    <span key={key} className="bg-red-200 text-red-800 px-1 rounded line-through">
-                        {part.content}
-                    </span>
-                ) : null;
-            case 'changed':
-                return isOptimized ? (
-                    <span key={key} className="bg-yellow-200 text-yellow-800 px-1 rounded">
-                        {part.newContent}
-                    </span>
-                ) : (
-                    <span key={key} className="bg-red-200 text-red-800 px-1 rounded line-through">
-                        {part.content}
-                    </span>
-                );
-            case 'unchanged':
-            default:
-                return <span key={key}>{part.content}</span>;
-        }
-    }).filter(Boolean);
-};
-
 const ResumeChangesComparison = ({ changesMade }: any) => {
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -122,34 +36,22 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
         ...Object.keys(finalChanges),
     ]);
 
-    // Helper function to render text with diff highlighting
-    const renderTextWithDiff = (text: string, isOriginal: boolean, compareText: string | null = null) => {
-        if (compareText && typeof compareText === "string" && text !== compareText) {
-            const diff = createDiff(isOriginal ? text : compareText, isOriginal ? compareText : text);
-            return (
-                <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                    {renderDiffText(diff, !isOriginal)}
-                </div>
-            );
-        }
-        return <div className="text-sm whitespace-pre-wrap">{text}</div>;
-    };
+    // Helper function to render text
+    // const renderText = (text: string) => {
+    //     return <div className="text-sm whitespace-pre-wrap">{text}</div>;
+    // };
 
-    // Helper function to render array items with diff highlighting
-    const renderArrayItem = (item: any, index: number, isOriginal: boolean, compareItem: any = null) => {
-        // Handle responsibilities with diff highlighting
+    // Helper function to render array items
+    const renderArrayItem = (item: any, index: number) => {
+        // Handle responsibilities
         if (item.responsibilities && Array.isArray(item.responsibilities)) {
-            const compareResponsibilities = compareItem?.responsibilities || [];
             return (
                 <ul className="space-y-1 text-sm">
                     {item.responsibilities.map((resp: any, respIndex: number) => {
-                        const compareResp = compareResponsibilities[respIndex];
                         return (
                             <li key={respIndex} className="flex items-start">
                                 <span className="text-gray-400 mr-2">•</span>
-                                <span>
-                                    {renderTextWithDiff(resp, isOriginal, compareResp)}
-                                </span>
+                                <span>{resp}</span>
                             </li>
                         );
                     })}
@@ -157,57 +59,44 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
             );
         }
 
-        // Handle skills with diff highlighting
+        // Handle skills
         if (item.skills) {
-            const compareSkills = compareItem?.skills || "";
             return (
                 <div>
                     <div className="font-medium text-sm mb-1">
-                        {renderTextWithDiff(item.category || "Skills", isOriginal, compareItem?.category)}
+                        {item.category || "Skills"}
                     </div>
                     <div className="text-sm text-gray-600">
-                        {renderTextWithDiff(item.skills, isOriginal, compareSkills)}
+                        {item.skills}
                     </div>
                 </div>
             );
         }
 
-        // Handle additional info with diff highlighting
+        // Handle additional info
         if (item.additionalInfo !== undefined) {
-            const compareAdditionalInfo = compareItem?.additionalInfo || "";
             return (
                 <div className="text-sm">
-                    {renderTextWithDiff(
-                        item.additionalInfo || "No additional information", 
-                        isOriginal, 
-                        compareAdditionalInfo || "No additional information"
-                    )}
+                    {item.additionalInfo || "No additional information"}
                 </div>
             );
         }
 
-        // Handle job title and company with diff highlighting
+        // Handle job title and company
         if (item.jobTitle || item.company || item.position) {
-            const compareTitle = compareItem?.jobTitle || compareItem?.position || "";
-            const compareCompany = compareItem?.company || "";
-            
             return (
                 <div className="space-y-2">
                     <div className="font-medium text-sm">
-                        {renderTextWithDiff(
-                            item.jobTitle || item.position || "Position", 
-                            isOriginal, 
-                            compareTitle
-                        )}
+                        {item.jobTitle || item.position || "Position"}
                     </div>
                     {item.company && (
                         <div className="text-sm text-gray-600">
-                            {renderTextWithDiff(item.company, isOriginal, compareCompany)}
+                            {item.company}
                         </div>
                     )}
                     {item.responsibilities && Array.isArray(item.responsibilities) && (
                         <div className="mt-2">
-                            {renderArrayItem(item, index, isOriginal, compareItem)}
+                            {renderArrayItem(item, index)}
                         </div>
                     )}
                 </div>
@@ -217,27 +106,22 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
         // Fallback for other item types
         return (
             <div className="text-sm text-gray-600">
-                {renderTextWithDiff(
-                    JSON.stringify(item, null, 2), 
-                    isOriginal, 
-                    compareItem ? JSON.stringify(compareItem, null, 2) : null
-                )}
+                {JSON.stringify(item, null, 2)}
             </div>
         );
     };
 
-    const renderValue = (value: any, isOriginal = false, compareValue: any = null) => {
+    const renderValue = (value: any) => {
         if (Array.isArray(value)) {
             return (
                 <div className="space-y-3">
                     {value.map((item, index) => {
-                        const compareItem = compareValue && Array.isArray(compareValue) ? compareValue[index] : null;
                         return (
                             <div
                                 key={item.id || index}
                                 className="border-l-2 border-gray-300 pl-3"
                             >
-                                {renderArrayItem(item, index, isOriginal, compareItem)}
+                                {renderArrayItem(item, index)}
                             </div>
                         );
                     })}
@@ -246,16 +130,12 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
         }
 
         if (typeof value === "string") {
-            return renderTextWithDiff(value, isOriginal, compareValue);
+            return <div className="text-sm whitespace-pre-wrap">{value}</div>;
         }
 
         return (
             <div className="text-sm text-gray-600">
-                {renderTextWithDiff(
-                    JSON.stringify(value, null, 2), 
-                    isOriginal, 
-                    compareValue ? JSON.stringify(compareValue, null, 2) : null
-                )}
+                {JSON.stringify(value, null, 2)}
             </div>
         );
     };
@@ -375,11 +255,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
                                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                                 {originalValue !== undefined ? (
                                                     <div className="text-sm leading-relaxed">
-                                                        {renderValue(
-                                                            originalValue,
-                                                            true,
-                                                            optimizedValue
-                                                        )}
+                                                        {renderValue(originalValue)}
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-400 italic">
@@ -400,11 +276,7 @@ const ResumeChangesComparison = ({ changesMade }: any) => {
                                             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                                 {optimizedValue !== undefined ? (
                                                     <div className="text-sm leading-relaxed">
-                                                        {renderValue(
-                                                            optimizedValue,
-                                                            false,
-                                                            originalValue
-                                                        )}
+                                                        {renderValue(optimizedValue)}
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-400 italic">

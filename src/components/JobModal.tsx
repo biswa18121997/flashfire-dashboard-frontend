@@ -1295,19 +1295,19 @@ useEffect(() => {
                                 </p>
                             </div>
                         </div>
-{/*                         {role == "operations" ? (
-                            // <button
-                            //     onClick={() => {
-                            //         window.open(
-                            //             `/optimize/${jobDetails._id}?view=editor`,
-                            //             "_blank"
-                            //         );
-                            //     }}
-                            //     className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700"
-                            // >
-                            //     Optimize resume
-                            // </button>
-                        ) : null} */}
+                        {role == "operations" ? (
+                            <button
+                                onClick={() => {
+                                    window.open(
+                                        `/optimize/${jobDetails._id}?view=editor`,
+                                        "_blank"
+                                    );
+                                }}
+                                className="hover:bg-orange-900 hover:bg-opacity-20 p-2 rounded-full transition-colors bg-orange-700"
+                            >
+                                Optimize resume
+                            </button>
+                        ) : null}
                         <button
                             onClick={() => setShowJobModal(false)}
                             className="hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"

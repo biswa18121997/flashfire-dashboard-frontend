@@ -18,6 +18,7 @@ import LockedSection from "./components/LockedSection";
 import ResumeParserModal from "./components/ResumeParserModal";
 import Login from "./components/Login";
 import AdminDashboard from "./components/AdminDashboard";
+import Maker from "./components/Maker";
 import { ResumePreview1 } from "./components/ResumePreview1";
 import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
@@ -142,6 +143,12 @@ function App() {
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
+    
+    // Additional state variables for job details and optimization
+    const [cameFromMaker, setCameFromMaker] = useState(false);
+    const [companyName, setCompanyName] = useState<string>("");
+    const [jobTitle, setJobTitle] = useState<string>("");
+    const [showOptimizeConfirmation, setShowOptimizeConfirmation] = useState(false);
 
     // Debug: Log store state on mount
     useEffect(() => {
@@ -1088,7 +1095,7 @@ function App() {
                 import.meta.env.VITE_API_URL || "http://localhost:5000";
             const saveData = {
                 filename,
-                data: backendResumeData,
+                data: resumeData,
                 checkboxStates: {
                     showSummary,
                     showProjects,
@@ -1111,7 +1118,7 @@ function App() {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        data: backendResumeData,
+                        data: resumeData,
                         checkboxStates: {
                             showSummary,
                             showProjects,
@@ -1410,8 +1417,8 @@ function App() {
                     skills: optimizedDataResult.skills || resumeData.skills,
                     education: optimizedDataResult.education || resumeData.education,
                     publications:
-                        optimizedData.publications || resumeData.publications,
-                });
+                        optimizedDataResult.publications || resumeData.publications,
+                };
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
                 alert(
                     'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
@@ -1699,8 +1706,10 @@ function App() {
                                                 : " View Changes"}
                                         </button>
                                     )}
+                                    </div>
 
                                 {/* Navigation Buttons */}
+                                <div className="flex items-center gap-3">
                                 <nav className="flex space-x-4">
                                     <button
                                         onClick={() => {
@@ -1730,6 +1739,7 @@ function App() {
                                         >
                                             All resumes
                                         </button>
+                                    </nav>
                                     </div>
                                 </div>
 
@@ -1972,7 +1982,7 @@ function App() {
                                     )}
 
                                     {/* Admin-only Unlock Key Editor (moved below Save, above Start Over) */}
-                                    <AccessKeyEditor />
+                                    {/* <AccessKeyEditor /> - Component not yet implemented */}
 
                                     {/* Start Over Button */}
                                     <button
