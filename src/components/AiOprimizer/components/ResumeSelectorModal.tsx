@@ -221,26 +221,10 @@ export default function ResumeSelectorModal({
             // Common logic for both admin and non-admin after fetching resume
             setResumeId(selectedResumeId);
 
-            // Transform backend data structure to frontend format if needed
-            // Handle both old format (firstName/lastName) and new format (name)
-            const transformedResumeData = {
-                ...resumeData,
-                personalInfo: {
-                    name: resumeData.personalInfo.name || resumeData.personalInfo.firstName || '',
-                    title: resumeData.personalInfo.title || '',
-                    phone: resumeData.personalInfo.phone || '',
-                    email: resumeData.personalInfo.email || '',
-                    location: resumeData.personalInfo.location || '',
-                    linkedin: resumeData.personalInfo.linkedin || '',
-                    portfolio: resumeData.personalInfo.portfolio || '',
-                    github: resumeData.personalInfo.github || ''
-                }
-            };
-
             // Store the selected resume persistently for future use
-            setLastSelectedResume(transformedResumeData, selectedResumeId);
+            setLastSelectedResume(resumeData, selectedResumeId);
 
-            onSelect(transformedResumeData);
+            onSelect(resumeData);
             setUnlockModalOpen(false);
             onClose();
         } catch (err) {

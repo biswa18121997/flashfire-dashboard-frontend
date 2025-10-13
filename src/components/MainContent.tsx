@@ -229,7 +229,6 @@ useEffect(() => {
             />
             </Suspense>
           )}
-
         </main>
 
         {/* PDF Uploader Modal */}

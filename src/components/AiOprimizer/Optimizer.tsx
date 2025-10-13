@@ -18,11 +18,11 @@ import LockedSection from "./components/LockedSection";
 import ResumeParserModal from "./components/ResumeParserModal";
 import Login from "./components/Login";
 import AdminDashboard from "./components/AdminDashboard";
-import Maker from "./components/Maker";
 import { ResumePreview1 } from "./components/ResumePreview1";
 import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
 import { ResumePreviewMedical } from "./components/ResumePreviewMedical";
+import { useJobsSessionStore } from "../../state_management/JobsSessionStore";
 import "./index.css"; //
 
 // Type definitions remain the same
@@ -72,22 +72,146 @@ interface PublicationItem {
 }
 type ResumeDataType = typeof initialData;
 
+function AccessKeyEditor() {
+    const { resume_id, unlockKey: accessKey, setAccessKey } = useResumeUnlockStore();
+    const [inputKey, setInputKey] = useState<string>(accessKey || "");
+    const [originalKey, setOriginalKey] = useState<string>(accessKey || "");
+    const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+    const [showConfirm, setShowConfirm] = useState<boolean>(false);
+    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+    const isAdmin = typeof window !== 'undefined' && localStorage.getItem("role") === "admin";
+
+    useEffect(() => {
+        setInputKey(accessKey || "");
+        setOriginalKey(accessKey || "");
+        // If we don't have a value yet, fetch from backend for accuracy
+        const fetchUnlock = async () => {
+            if (!accessKey && resume_id) {
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+                    const res = await fetch(`${apiUrl}/api/resume-index/${resume_id}`);
+                    const data = await res.json();
+                    if (res.ok && data && typeof data.unlockKey === 'string') {
+                        setAccessKey(data.unlockKey);
+                        setInputKey(data.unlockKey);
+                        setOriginalKey(data.unlockKey);
+                    }
+                } catch (e) {
+                    console.error("Error fetching unlock key:", e);
+                    
+                }
+            }
+        };
+        fetchUnlock();
+    }, [accessKey, resume_id, setAccessKey]);
+
+    const hasChanges = inputKey.trim() !== (originalKey || "");
+    const disabled = !resume_id || !hasChanges || status === "saving";
+
+    const performUpdate = async () => {
+        if (!resume_id || !hasChanges) return;
+        try {
+            setStatus("saving");
+            const res = await fetch(`${apiUrl}/api/update-unlock-key`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ resume_id, unlockKey: inputKey.trim() })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                throw new Error(data.error || "Failed to update unlock key");
+            }
+            setAccessKey(data.unlockKey);
+            setOriginalKey(data.unlockKey);
+            setStatus("saved");
+            setTimeout(() => setStatus("idle"), 1500);
+        } catch (e) {
+            setStatus("error");
+            setTimeout(() => setStatus("idle"), 2000);
+        }
+    };
+
+    const handleUpdateClick = () => {
+        if (!hasChanges || !resume_id) return;
+        setShowConfirm(true);
+    };
+
+    // Only admins can see and update unlock key editor
+    if (!resume_id || !isAdmin) {
+        return null;
+    }
+
+    return (
+        <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unlock Key</label>
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={inputKey}
+                    onChange={(e) => setInputKey(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter unlock key"
+                />
+                <button
+                    onClick={handleUpdateClick}
+                    disabled={disabled}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${disabled ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                >
+                    {status === "saving" ? "Updating..." : "Update Unlock Key"}
+                </button>
+            </div>
+            {status === "saved" && (
+                <p className="text-xs text-green-600 mt-1">Unlock key updated.</p>
+            )}
+            {status === "error" && (
+                <p className="text-xs text-red-600 mt-1">Failed to update unlock key.</p>
+            )}
+            {showConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[999] flex items-center justify-center" onClick={() => setShowConfirm(false)}>
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirm Update</h3>
+                        <p className="text-sm text-gray-600 mb-4">Do you want to update the unlock key?</p>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-3 py-2 text-sm rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                onClick={() => setShowConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                                onClick={() => {
+                                    performUpdate();
+                                    setShowConfirm(false);
+                                }}
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function App() {
     // URL parameters
     const [searchParams] = useSearchParams();
     const { jobId } = useParams<{ jobId: string }>();
     const startWithEditor = searchParams.get("view") === "editor";
-    const resumeFilename = searchParams.get("resume");
-    const clientName = searchParams.get("client");
 
     // Authentication state
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState<string>("");
     const [token, setToken] = useState<string>("");
-    const [authView, setAuthView] = useState<"login" | "admin" | "resume" | "maker">(
+    const [authView, setAuthView] = useState<"login" | "admin" | "resume">(
         "login"
     );
     const { versionV, setVersion } = PreviewStore();
+
+    // Get session store for updating job cache
+    const { updateJob, refreshJobByMongoId } = useJobsSessionStore();
 
     const {
         resumeData,
@@ -117,7 +241,6 @@ function App() {
         resetStore,
         loadLastSelectedResume,
         clearLastSelectedResume,
-        setLastSelectedResume,
         debugLocalStorage,
         // setUserId,
         showPublications,
@@ -136,19 +259,18 @@ function App() {
         lockAllSections,
         checkAdminAndUnlock,
         setResumeId,
-        resume_id,
         // setAccessKey,
+        resume_id,
     } = useResumeUnlockStore();
 
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
-    
-    // Additional state variables for job details and optimization
-    const [cameFromMaker, setCameFromMaker] = useState(false);
-    const [companyName, setCompanyName] = useState<string>("");
-    const [jobTitle, setJobTitle] = useState<string>("");
-    const [showOptimizeConfirmation, setShowOptimizeConfirmation] = useState(false);
+
+    // Always open in Editor on initial load
+    useEffect(() => {
+        setCurrentResumeView("editor");
+    }, []);
 
     // Debug: Log store state on mount
     useEffect(() => {
@@ -557,20 +679,10 @@ function App() {
         console.log("showPublications state changed to:", showPublications);
     }, [showPublications]);
 
-    // Handle jobId from URL (only for regular resumes, not client resumes)
+    // Handle jobId from URL
     useEffect(() => {
-        // Don't override resume_id if it's already set from client resume
-        const currentClientId = localStorage.getItem('currentClientId');
-        const currentResumeId = localStorage.getItem('currentResumeId');
-        
-        // If we have client resume info in localStorage, don't use jobId from URL
-        if (currentClientId && currentResumeId) {
-            console.log("Client resume already loaded, ignoring jobId from URL");
-            return;
-        }
-        
         if (jobId && jobId !== resume_id) {
-            console.log("Setting resume ID from URL (regular resume):", jobId);
+            console.log("Setting resume ID from URL:", jobId);
             setResumeId(jobId);
         }
     }, [jobId, resume_id, setResumeId]);
@@ -596,92 +708,6 @@ function App() {
         loadLastSelectedResume,
         debugLocalStorage,
     ]);
-
-    // Load client resume data when resume filename and client are provided
-    useEffect(() => {
-        const loadClientResume = async () => {
-            if (resumeFilename && clientName && isAuthenticated && storeHydrated) {
-                console.log("Loading client resume:", { resumeFilename, clientName });
-                try {
-                    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
-                    
-                    // Find the client and resume
-                    const clientsResponse = await fetch(`${apiUrl}/api/clients`);
-                    if (!clientsResponse.ok) throw new Error('Failed to fetch clients');
-                    
-                    const clients = await clientsResponse.json();
-                    const client = clients.find((c: any) => c.name === clientName);
-                    
-                    if (!client) {
-                        console.error('Client not found:', clientName);
-                        return;
-                    }
-                    
-                    const resume = client.resumes.find((r: any) => r.filename === resumeFilename);
-                    if (!resume) {
-                        console.error('Resume not found:', resumeFilename);
-                        return;
-                    }
-                    
-                    // Get resume data using the correct endpoint
-                    const resumeResponse = await fetch(`${apiUrl}/api/clients/${client._id}/resumes/${resume._id}/data`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    
-                    if (!resumeResponse.ok) throw new Error('Failed to fetch resume data');
-                    
-                    const responseData = await resumeResponse.json();
-                    const resumeData = responseData.resume.data;
-                    const checkboxStates = responseData.resume.checkboxStates;
-                    
-                    // Transform backend data structure to frontend format
-                    // Use only firstName as it contains the full name
-                    const transformedResumeData = {
-                        ...resumeData,
-                        personalInfo: {
-                            name: resumeData.personalInfo.firstName || clientName,
-                            title: resumeData.personalInfo.title || '',
-                            phone: resumeData.personalInfo.phone || '',
-                            email: resumeData.personalInfo.email || '',
-                            location: resumeData.personalInfo.location || '',
-                            linkedin: resumeData.personalInfo.linkedin || '',
-                            portfolio: resumeData.personalInfo.portfolio || '',
-                            github: resumeData.personalInfo.github || ''
-                        }
-                    };
-                    
-                    setLastSelectedResume(transformedResumeData, resume._id);
-                    setResumeId(resume._id);  // Use ResumeIndex _id, not filename!
-                    
-                    // Store client and resume info for saving
-                    localStorage.setItem('currentClientId', client._id);
-                    localStorage.setItem('currentResumeId', resume._id);
-                    
-                    // Set checkbox states from the response
-                    if (checkboxStates) {
-                        setShowSummary(checkboxStates.showSummary ?? true);
-                        setShowProjects(checkboxStates.showProjects ?? false);
-                        setShowLeadership(checkboxStates.showLeadership ?? false);
-                        setShowPublications(checkboxStates.showPublications ?? false);
-                    }
-                    
-                    console.log('Client resume loaded successfully:', { 
-                        clientName, 
-                        displayName: resume.displayName,
-                        filename: resumeFilename 
-                    });
-                    
-                } catch (error) {
-                    console.error('Error loading client resume:', error);
-                }
-            }
-        };
-        
-        loadClientResume();
-    }, [resumeFilename, clientName, isAuthenticated, storeHydrated, setResumeData, setBaseResume, setResumeId]);
 
     // Fetch job description from backend when jobId is available
     const fetchJobDescription = async (jobId: string) => {
@@ -731,16 +757,6 @@ function App() {
                 console.log("✅ Job description set in store");
             } else {
                 console.log("⚠️ No job description found for this job");
-            }
-            
-            // Set company name and job title
-            if (data.companyName) {
-                setCompanyName(data.companyName);
-                console.log("✅ Company name set:", data.companyName);
-            }
-            if (data.jobTitle) {
-                setJobTitle(data.jobTitle);
-                console.log("✅ Job title set:", data.jobTitle);
             }
         } catch (error) {
             console.error("❌ Error fetching job description:", error);
@@ -853,113 +869,9 @@ function App() {
 
     // Switch to resume builder from admin dashboard
     const switchToResumeBuilder = () => {
-        setCameFromMaker(false); // Not coming from maker
         setAuthView("resume");
         // For admin users, we don't need to unlock sections since they won't see the editing panel
         // Admin users will only see the resume preview without editing capabilities
-    };
-
-    // Switch to resume maker from admin dashboard
-    const switchToResumeMaker = () => {
-        setAuthView("maker");
-        // Navigate directly to Resume Maker for client management
-    };
-
-    // Go back to admin dashboard from maker
-    const backToAdminDashboard = () => {
-        setAuthView("admin");
-    };
-
-    // Handle editing client resume from Maker component
-    const handleEditClientResume = async (resume: any, client: any) => {
-        try {
-            setCameFromMaker(true); // Coming from maker
-            
-            if (!resume._id) {
-                console.error('Resume _id is undefined!');
-                alert('Error: Resume ID is missing. Please try again.');
-                return;
-            }
-            
-            const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
-            
-            // Get client resume data using the correct endpoint
-            const resumeResponse = await fetch(`${apiUrl}/api/clients/${client._id}/resumes/${resume._id}/data`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            if (!resumeResponse.ok) throw new Error('Failed to fetch resume data');
-            
-            const responseData = await resumeResponse.json();
-            console.log('Response data structure:', responseData);
-            
-            // Extract resume data from the response
-            const resumeData = responseData.resume.data;
-            const resumeIndex = responseData.resumeIndex;
-            const checkboxStates = responseData.resume.checkboxStates;
-            
-            console.log('Resume data:', resumeData);
-            console.log('Checkbox states:', checkboxStates);
-            
-            // Transform backend data structure to frontend format
-            // Use only firstName as it contains the full name
-            const transformedResumeData = {
-                ...resumeData,
-                personalInfo: {
-                    name: resumeData.personalInfo.firstName || client.name,
-                    title: resumeData.personalInfo.title || '',
-                    phone: resumeData.personalInfo.phone || '',
-                    email: resumeData.personalInfo.email || '',
-                    location: resumeData.personalInfo.location || '',
-                    linkedin: resumeData.personalInfo.linkedin || '',
-                    portfolio: resumeData.personalInfo.portfolio || '',
-                    github: resumeData.personalInfo.github || ''
-                }
-            };
-            
-            console.log('Setting resume data:', transformedResumeData);
-            console.log('Personal info being set:', transformedResumeData.personalInfo);
-            
-            // Store the selected resume persistently for future use (same as ResumeSelectorModal)
-            setLastSelectedResume(transformedResumeData, resume._id);
-            setResumeId(resume._id);  // Use ResumeIndex _id, not filename!
-            
-            // Store client and resume info for saving
-            localStorage.setItem('currentClientId', client._id);
-            localStorage.setItem('currentResumeId', resume._id);
-            
-            // Set checkbox states from the response
-            if (checkboxStates) {
-                console.log('Setting checkbox states:', checkboxStates);
-                setShowSummary(checkboxStates.showSummary ?? true);
-                setShowProjects(checkboxStates.showProjects ?? false);
-                setShowLeadership(checkboxStates.showLeadership ?? false);
-                setShowPublications(checkboxStates.showPublications ?? false);
-            }
-            
-            // Switch to resume editing view
-            setAuthView("resume");
-            setCurrentResumeView("editor");
-            
-            // Debug: Check what's in the store after setting
-            setTimeout(() => {
-                console.log('Store resumeData after setting:', resumeData);
-                console.log('Store personalInfo after setting:', resumeData.personalInfo);
-            }, 100);
-            
-            console.log('Client resume loaded successfully for editing:', { 
-                clientName: client.name, 
-                displayName: resume.displayName,
-                filename: resume.filename 
-            });
-            
-        } catch (error) {
-            console.error('Error loading client resume for editing:', error);
-            alert('Error loading resume for editing. Please try again.');
-        }
     };
 
     // Generate dynamic filename based on name
@@ -1092,7 +1004,7 @@ function App() {
                 : "user";
             const filename = `${safeName}_resume.pdf`;
             const apiUrl =
-                import.meta.env.VITE_API_URL || "http://localhost:5000";
+                import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
             const saveData = {
                 filename,
                 data: resumeData,
@@ -1106,49 +1018,25 @@ function App() {
             };
             console.log("Saving resume with data:", saveData);
 
-            // Check if we're editing a client resume
-            const currentClientId = localStorage.getItem('currentClientId');
-            const currentResumeId = localStorage.getItem('currentResumeId');
-            
-            if (currentClientId && currentResumeId) {
-                // This is a client resume, use the client resume update endpoint
-                console.log("Updating client resume:", { clientId: currentClientId, resumeId: currentResumeId });
-                
-                const response = await fetch(`${apiUrl}/api/clients/${currentClientId}/resumes/${currentResumeId}/data`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        data: resumeData,
-                        checkboxStates: {
-                            showSummary,
-                            showProjects,
-                            showLeadership,
-                            showPublications,
-                        }
-                    }),
-                });
+            const response = await fetch(`${apiUrl}/api/save-resume`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(saveData),
+            });
 
-                const result = await response.json();
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error || "Failed to update client resume");
-                }
-
-                console.log("Client resume updated:", result);
-            } else {
-                // Regular resume save
-                const response = await fetch(`${apiUrl}/api/save-resume`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(saveData),
-                });
-
-                const result = await response.json();
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error || "Failed to save resume");
-                }
-
-                console.log("Resume saved:", result);
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || "Failed to save resume");
             }
+
+            console.log(
+                "Resume JSON saved:",
+                filename,
+                "Resume ID:",
+                result.resume_id
+            );
+            // Optionally store resume_id in state or context for later use
+            // setResumeId(result.resume_id);
 
             setTimeout(() => {
                 setIsSaved(false);
@@ -1370,6 +1258,291 @@ function App() {
         }
     };
 
+    const autoSaveChangesToDashboard = async (originalData: any, optimizedData: any) => {
+        try {
+            const apiUrl =
+                import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+            // Get only changed fields
+            const getChangedFieldsOnly = () => {
+                const startingContent: any = {};
+                const finalChanges: any = {};
+
+                // Personal Info - only changed fields
+                const personalInfoChanged = Object.keys(
+                    originalData.personalInfo
+                ).filter(
+                    (key) =>
+                        originalData.personalInfo[
+                            key as keyof typeof originalData.personalInfo
+                        ] !==
+                        optimizedData.personalInfo[
+                            key as keyof typeof optimizedData.personalInfo
+                        ]
+                );
+
+                if (personalInfoChanged.length > 0) {
+                    startingContent.personalInfo = {};
+                    finalChanges.personalInfo = {};
+                    personalInfoChanged.forEach((key) => {
+                        const typedKey = key as keyof typeof originalData.personalInfo;
+                        startingContent.personalInfo[key] =
+                            originalData.personalInfo[typedKey];
+                        finalChanges.personalInfo[key] =
+                            optimizedData.personalInfo[typedKey];
+                    });
+                }
+
+                // Summary - only if changed
+                if (originalData.summary !== optimizedData.summary) {
+                    startingContent.summary = originalData.summary;
+                    finalChanges.summary = optimizedData.summary;
+                }
+
+                // Work Experience - only changed items
+                const changedWorkExp = originalData.workExperience
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.workExperience[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedWorkExp.length > 0) {
+                    startingContent.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Projects - only changed items
+                const changedProjects = originalData.projects
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.projects[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedProjects.length > 0) {
+                    startingContent.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Skills - only changed categories
+                const changedSkills = originalData.skills
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.skills[idx];
+                        if (!opt) return null;
+
+                        if (orig.category !== opt.category || orig.skills !== opt.skills) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    category: orig.category,
+                                    skills: orig.skills,
+                                },
+                                optimized: {
+                                    category: opt.category,
+                                    skills: opt.skills,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedSkills.length > 0) {
+                    startingContent.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Leadership - only changed items
+                const changedLeadership = originalData.leadership
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.leadership[idx];
+                        if (!opt) return null;
+
+                        if (orig.title !== opt.title || orig.organization !== opt.organization) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    title: orig.title,
+                                    organization: orig.organization,
+                                },
+                                optimized: {
+                                    title: opt.title,
+                                    organization: opt.organization,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedLeadership.length > 0) {
+                    startingContent.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Education - only changed items
+                const changedEducation = originalData.education
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.education[idx];
+                        if (!opt) return null;
+
+                        const fields = ["institution", "location", "degree", "field", "additionalInfo"];
+                        const hasChanges = fields.some((field) => orig[field] !== opt[field]);
+
+                        if (hasChanges) {
+                            const originals: any = {};
+                            const changes: any = {};
+
+                            fields.forEach((field) => {
+                                if (orig[field] !== opt[field]) {
+                                    originals[field] = orig[field];
+                                    changes[field] = opt[field];
+                                }
+                            });
+
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedEducation.length > 0) {
+                    startingContent.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                return { startingContent, finalChanges };
+            };
+
+            const { startingContent, finalChanges } = getChangedFieldsOnly();
+
+            console.log("Auto-saving changes for job ID:", jobId);
+
+            const response = await fetch(`${apiUrl}/saveChangedSession`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: jobId,
+                    startingContent: startingContent,
+                    finalChanges: finalChanges,
+                }),
+            });
+
+            if (response.ok) {
+                console.log("Changes auto-saved successfully, now refreshing job data...");
+                
+                // After saving successfully, refresh the job from backend
+                if (jobId && refreshJobByMongoId) {
+                    try {
+                        await refreshJobByMongoId(jobId);
+                        console.log("Job data refreshed successfully in session storage");
+                    } catch (err) {
+                        console.error('Error refreshing job in background:', err);
+                    }
+                }
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error("Failed to auto-save changes:", errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error("Error during auto-save:", error);
+            return false;
+        }
+    };
+
     const handleOptimizeWithAI = async () => {
         if (!jobDescription.trim()) {
             alert("Please enter a job description first.");
@@ -1419,10 +1592,30 @@ function App() {
                     publications:
                         optimizedDataResult.publications || resumeData.publications,
                 };
+
+                setOptimizedData(newOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
-                alert(
-                    'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                
+                // Update job in session storage to reflect changes immediately
+                if (jobId) {
+                    updateJob(jobId, { 
+                        updatedAt: new Date().toISOString()
+                    });
+                    console.log("Updated job in session storage to trigger re-render");
+                }
+                
+                
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, newOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             } else {
                 alert(
                     "AI optimization failed. Please try again or edit your resume content manually."
@@ -1509,9 +1702,19 @@ function App() {
 
                 setOptimizedData(sampleOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
-                alert(
-                    'Demo mode: AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                
+                
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'Demo mode: AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'Demo mode: AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             }
         } catch (error) {
             console.error("Error optimizing resume:", error);
@@ -1539,9 +1742,19 @@ function App() {
 
             setOptimizedData(sampleOptimizedData);
             setCurrentResumeView("optimized"); // Automatically switch to optimized view
-            alert(
-                'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-            );
+            
+            
+            const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+            
+            if (saveSuccess) {
+                alert(
+                    'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                );
+            } else {
+                alert(
+                    'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                );
+            }
         } finally {
             setIsOptimizing(false);
         }
@@ -1572,13 +1785,8 @@ function App() {
                 token={token}
                 onLogout={handleLogout}
                 onSwitchToResumeBuilder={switchToResumeBuilder}
-                onSwitchToResumeMaker={switchToResumeMaker}
             />
         );
-    }
-
-    if (authView === "maker") {
-        return <Maker onEditResume={handleEditClientResume} onBackToDashboard={backToAdminDashboard} />;
     }
 
     return (
@@ -1589,7 +1797,7 @@ function App() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
-                                    Professional Resume Optimizer Portal
+                                    Professional Resume Builder Portal
                                 </h1>
                                 <p className="text-gray-600 mt-1">
                                     Edit sections on the left, see live preview
@@ -1648,46 +1856,6 @@ function App() {
                                     </button>
                                 )}
 
-                                {/* Navigation Buttons Grid */}
-                                <div className="flex flex-col gap-3">
-                                    {/* Row 1: Resume Editor, Changes Made, Hide Changes */}
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => {
-                                                setCurrentResumeView("editor");
-                                                setShowChanges(false);
-                                            }}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                                currentResumeView === "editor"
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                            }`}
-                                        >
-                                            Resume Editor
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                setCurrentResumeView(
-                                                    optimizedData
-                                                        ? "optimized"
-                                                        : "changes"
-                                                );
-                                                if (!optimizedData)
-                                                    setShowChanges(false);
-                                            }}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                                currentResumeView === "optimized" ||
-                                                currentResumeView === "changes"
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                            }`}
-                                        >
-                                            {optimizedData
-                                                ? "Optimized Resume"
-                                                : "Changes Made"}
-                                        </button>
-
                                 {/* View Changes Toggle - Only show when optimized data exists and user is on optimized view */}
                                 {optimizedData &&
                                     currentResumeView === "optimized" && (
@@ -1706,66 +1874,105 @@ function App() {
                                                 : " View Changes"}
                                         </button>
                                     )}
-                                    </div>
 
                                 {/* Navigation Buttons */}
-                                <div className="flex items-center gap-3">
                                 <nav className="flex space-x-4">
+                                    {userRole === "admin" && (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setVersion(1);
+                                                    setShowModal(true);
+                                                }}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                            >
+                                                All resume V1
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setVersion(2);
+                                                    setShowModal(true);
+                                                }}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                            >
+                                                Medical resumes
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* All Resumes Button */}
                                     <button
                                         onClick={() => {
-                                            setVersion(1);
+                                            setVersion(0);
                                             setShowModal(true);
                                         }}
                                         className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
                                     >
-                                        All resume V1
+                                        All resumes
                                     </button>
+                                    <ResumeSelectorModal
+                                        open={showModal}
+                                        onClose={() => {
+                                            setShowModal(false);
+                                            setCurrentResumeView("editor");
+                                        }}
+                                        onSelect={(
+                                            resume: ResumeDataType & {
+                                                checkboxStates?: any;
+                                            }
+                                        ) => {
+                                            setResumeData(resume);
+                                            setBaseResume(resume);
+                                            checkLoadedResumeData(resume);
+                                            lockAllSections();
+                                            setShowModal(false);
+                                            if (userRole === "admin") {
+                                                checkAdminAndUnlock();
+                                            }
+                                            setCurrentResumeView("editor");
+
+                                            // setModalVersion(null);
+                                        }}
+                                        version={versionV}
+                                    />
+
+                                    {/* Other nav buttons */}
                                     <button
                                         onClick={() => {
-                                            setVersion(2);
-                                            setShowModal(true);
+                                            setCurrentResumeView("editor");
+                                            setShowChanges(false);
                                         }}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                            currentResumeView === "editor"
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        }`}
                                     >
-                                        Medical resumes
+                                        Resume Editor
                                     </button>
 
-                                        <button
-                                            onClick={() => {
-                                                setVersion(0);
-                                                setShowModal(true);
-                                            }}
-                                            className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                        >
-                                            All resumes
-                                        </button>
-                                    </nav>
-                                    </div>
-                                </div>
-
-                                <ResumeSelectorModal
-                                    open={showModal}
-                                    onClose={() => {
-                                        setShowModal(false);
-                                        setCurrentResumeView("editor");
-                                    }}
-                                    onSelect={(
-                                        resume: ResumeDataType & {
-                                            checkboxStates?: any;
-                                        }
-                                    ) => {
-                                        setResumeData(resume);
-                                        setBaseResume(resume);
-                                        checkLoadedResumeData(resume);
-                                        lockAllSections();
-                                        setShowModal(false);
-                                        if (userRole === "admin") {
-                                            checkAdminAndUnlock();
-                                        }
-                                        setCurrentResumeView("editor");
-                                    }}
-                                    version={versionV}
-                                />
+                                    <button
+                                        onClick={() => {
+                                            setCurrentResumeView(
+                                                optimizedData
+                                                    ? "optimized"
+                                                    : "changes"
+                                            );
+                                            if (!optimizedData)
+                                                setShowChanges(false);
+                                        }}
+                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                            currentResumeView === "optimized" ||
+                                            currentResumeView === "changes"
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {optimizedData
+                                            ? "Optimized Resume"
+                                            : "Changes Made"}
+                                    </button>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -1783,7 +1990,6 @@ function App() {
                                     sectionName="Resume is locked"
                                 >
                                     <PersonalInfo
-                                        key={resume_id || 'default'}
                                         data={resumeData.personalInfo}
                                         onChange={updatePersonalInfo}
                                     />
@@ -1982,7 +2188,7 @@ function App() {
                                     )}
 
                                     {/* Admin-only Unlock Key Editor (moved below Save, above Start Over) */}
-                                    {/* <AccessKeyEditor /> - Component not yet implemented */}
+                                    <AccessKeyEditor />
 
                                     {/* Start Over Button */}
                                     <button
@@ -2048,7 +2254,7 @@ function App() {
 
                                     {/* Optimize with AI Button - Also stays UNLOCKED */}
                                     <button
-                                        onClick={() => setShowOptimizeConfirmation(true)}
+                                        onClick={handleOptimizeWithAI}
                                         disabled={
                                             isOptimizing ||
                                             !jobDescription.trim()
@@ -2116,7 +2322,6 @@ function App() {
                                     </div>
                                     {versionV === 0 ? (
                                         <ResumePreview
-                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
@@ -2133,7 +2338,6 @@ function App() {
 
                                     {versionV === 1 ? (
                                         <ResumePreview1
-                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
@@ -2149,7 +2353,6 @@ function App() {
 
                                     {versionV === 2 ? (
                                         <ResumePreviewMedical
-                                            key={resume_id || 'default'}
                                             data={resumeData}
                                             showLeadership={showLeadership}
                                             showProjects={showProjects}
@@ -2697,64 +2900,6 @@ function App() {
                     )}
                 </div>
             </div>
-            
-            {/* Optimize Confirmation Dialog */}
-            {showOptimizeConfirmation && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                            Confirm Resume Optimization
-                        </h2>
-                        <div className="mb-8">
-                            <p className="text-lg text-gray-700 text-center mb-4">
-                                Do you want to optimize the resume for:
-                            </p>
-                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
-                                <div className="text-center">
-                                    <span className="text-3xl font-bold text-purple-700 block mb-3">
-                                        {resumeData.personalInfo?.name || "Unknown"}
-                                    </span>
-                                    <p className="text-xl text-gray-700 mb-2">at</p>
-                                    <div className="flex flex-wrap justify-center items-center gap-6">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xl text-gray-700">Role:</span>
-                                            <span className="text-2xl font-bold text-blue-700">
-                                                {jobTitle || "Role not specified"}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xl text-gray-700">Company:</span>
-                                            <span className="text-2xl font-bold text-blue-700">
-                                                {companyName || "Company not specified"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-500 text-center mt-4">
-                                Please verify the name, role, and company name are correct before proceeding
-                            </p>
-                        </div>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => {
-                                    setShowOptimizeConfirmation(false);
-                                    handleOptimizeWithAI();
-                                }}
-                                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-lg"
-                            >
-                                Confirm
-                            </button>
-                            <button
-                                onClick={() => setShowOptimizeConfirmation(false)}
-                                className="flex-1 bg-gray-300 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors font-semibold text-lg"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }
