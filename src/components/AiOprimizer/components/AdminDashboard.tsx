@@ -54,9 +54,10 @@ interface AdminDashboardProps {
   token: string;
   onLogout: () => void;
   onSwitchToResumeBuilder?: () => void;
+  onSwitchToResumeMaker?: () => void;
 }
 
-export default function AdminDashboard({ token, onLogout, onSwitchToResumeBuilder }: AdminDashboardProps) {
+export default function AdminDashboard({ token, onLogout, onSwitchToResumeBuilder, onSwitchToResumeMaker }: AdminDashboardProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginEvent[]>([]);
   const [sessionKeys, setSessionKeys] = useState<SessionKey[]>([]);
@@ -342,10 +343,19 @@ export default function AdminDashboard({ token, onLogout, onSwitchToResumeBuilde
               {onSwitchToResumeBuilder && (
                 <button
                   onClick={onSwitchToResumeBuilder}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Resume Builder</span>
+                </button>
+              )}
+              {onSwitchToResumeMaker && (
+                <button
+                  onClick={onSwitchToResumeMaker}
                   className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
                 >
                   <FileText className="h-4 w-4" />
-                  <span>Resume Builder</span>
+                  <span>Resume Maker</span>
                 </button>
               )}
               <button
