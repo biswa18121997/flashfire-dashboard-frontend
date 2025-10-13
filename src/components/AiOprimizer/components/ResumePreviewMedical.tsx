@@ -63,6 +63,8 @@ interface ResumePreviewProps {
     showProjects?: boolean;
     showSummary?: boolean;
     showPublications?: boolean;
+    showChanges?: boolean;
+    changedFields?: Set<string>;
 }
 
 export const ResumePreviewMedical: React.FC<ResumePreviewProps> = ({
