@@ -213,9 +213,12 @@ function App() {
         "login"
     );
     const { versionV, setVersion } = PreviewStore();
+    
+    // Track where user came from (to conditionally show Resume Maker buttons)
+    const [cameFromMaker, setCameFromMaker] = useState(false);
 
     // Get session store for updating job cache
-    const { updateJob } = useJobsSessionStore();
+    const { updateJob, refreshJobByMongoId } = useJobsSessionStore();
 
     const {
         resumeData,
@@ -271,6 +274,11 @@ function App() {
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
+    
+    // Job-related state
+    const [companyName, setCompanyName] = useState<string>("");
+    const [jobTitle, setJobTitle] = useState<string>("");
+    const [showOptimizeConfirmation, setShowOptimizeConfirmation] = useState(false);
 
     // Always open in Editor on initial load
     useEffect(() => {
@@ -859,6 +867,16 @@ function App() {
             } else {
                 console.log("⚠️ No job description found for this job");
             }
+            
+            // Set company name and job title
+            if (data.companyName) {
+                setCompanyName(data.companyName);
+                console.log("✅ Company name set:", data.companyName);
+            }
+            if (data.jobTitle) {
+                setJobTitle(data.jobTitle);
+                console.log("✅ Job title set:", data.jobTitle);
+            }
         } catch (error) {
             console.error("❌ Error fetching job description:", error);
 
@@ -970,14 +988,28 @@ function App() {
 
     // Switch to resume builder from admin dashboard
     const switchToResumeBuilder = () => {
+        setCameFromMaker(false); // Not coming from maker
         setAuthView("resume");
         // For admin users, we don't need to unlock sections since they won't see the editing panel
         // Admin users will only see the resume preview without editing capabilities
     };
 
+    // Switch to resume maker from admin dashboard
+    const switchToResumeMaker = () => {
+        setAuthView("maker");
+        // Navigate directly to Resume Maker for client management
+    };
+
+    // Go back to admin dashboard from maker
+    const backToAdminDashboard = () => {
+        setAuthView("admin");
+    };
+
     // Handle editing client resume from Maker component
     const handleEditClientResume = async (resume: any, client: any) => {
         try {
+            setCameFromMaker(true); // Coming from maker
+            
             if (!resume._id) {
                 console.error('Resume _id is undefined!');
                 alert('Error: Resume ID is missing. Please try again.');
@@ -1491,6 +1523,291 @@ function App() {
         }
     };
 
+    const autoSaveChangesToDashboard = async (originalData: any, optimizedData: any) => {
+        try {
+            const apiUrl =
+                import.meta.env.VITE_API_BASE_URL || "http://localhost:8086";
+
+            // Get only changed fields
+            const getChangedFieldsOnly = () => {
+                const startingContent: any = {};
+                const finalChanges: any = {};
+
+                // Personal Info - only changed fields
+                const personalInfoChanged = Object.keys(
+                    originalData.personalInfo
+                ).filter(
+                    (key) =>
+                        originalData.personalInfo[
+                            key as keyof typeof originalData.personalInfo
+                        ] !==
+                        optimizedData.personalInfo[
+                            key as keyof typeof optimizedData.personalInfo
+                        ]
+                );
+
+                if (personalInfoChanged.length > 0) {
+                    startingContent.personalInfo = {};
+                    finalChanges.personalInfo = {};
+                    personalInfoChanged.forEach((key) => {
+                        const typedKey = key as keyof typeof originalData.personalInfo;
+                        startingContent.personalInfo[key] =
+                            originalData.personalInfo[typedKey];
+                        finalChanges.personalInfo[key] =
+                            optimizedData.personalInfo[typedKey];
+                    });
+                }
+
+                // Summary - only if changed
+                if (originalData.summary !== optimizedData.summary) {
+                    startingContent.summary = originalData.summary;
+                    finalChanges.summary = optimizedData.summary;
+                }
+
+                // Work Experience - only changed items
+                const changedWorkExp = originalData.workExperience
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.workExperience[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedWorkExp.length > 0) {
+                    startingContent.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.workExperience = changedWorkExp.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Projects - only changed items
+                const changedProjects = originalData.projects
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.projects[idx];
+                        if (!opt) return null;
+
+                        const changes: any = {};
+                        const originals: any = {};
+                        let hasChanges = false;
+
+                        ["position", "company", "duration", "location", "roleType"].forEach((field) => {
+                            if (orig[field] !== opt[field]) {
+                                originals[field] = orig[field];
+                                changes[field] = opt[field];
+                                hasChanges = true;
+                            }
+                        });
+
+                        if (JSON.stringify(orig.responsibilities) !== JSON.stringify(opt.responsibilities)) {
+                            originals.responsibilities = [...orig.responsibilities];
+                            changes.responsibilities = [...opt.responsibilities];
+                            hasChanges = true;
+                        }
+
+                        if (hasChanges) {
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedProjects.length > 0) {
+                    startingContent.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.projects = changedProjects.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Skills - only changed categories
+                const changedSkills = originalData.skills
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.skills[idx];
+                        if (!opt) return null;
+
+                        if (orig.category !== opt.category || orig.skills !== opt.skills) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    category: orig.category,
+                                    skills: orig.skills,
+                                },
+                                optimized: {
+                                    category: opt.category,
+                                    skills: opt.skills,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedSkills.length > 0) {
+                    startingContent.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.skills = changedSkills.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Leadership - only changed items
+                const changedLeadership = originalData.leadership
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.leadership[idx];
+                        if (!opt) return null;
+
+                        if (orig.title !== opt.title || orig.organization !== opt.organization) {
+                            return {
+                                id: orig.id,
+                                original: {
+                                    title: orig.title,
+                                    organization: orig.organization,
+                                },
+                                optimized: {
+                                    title: opt.title,
+                                    organization: opt.organization,
+                                },
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedLeadership.length > 0) {
+                    startingContent.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.leadership = changedLeadership.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                // Education - only changed items
+                const changedEducation = originalData.education
+                    .map((orig: any, idx: number) => {
+                        const opt = optimizedData.education[idx];
+                        if (!opt) return null;
+
+                        const fields = ["institution", "location", "degree", "field", "additionalInfo"];
+                        const hasChanges = fields.some((field) => orig[field] !== opt[field]);
+
+                        if (hasChanges) {
+                            const originals: any = {};
+                            const changes: any = {};
+
+                            fields.forEach((field) => {
+                                if (orig[field] !== opt[field]) {
+                                    originals[field] = orig[field];
+                                    changes[field] = opt[field];
+                                }
+                            });
+
+                            return {
+                                id: orig.id,
+                                original: originals,
+                                optimized: changes,
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (changedEducation.length > 0) {
+                    startingContent.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.original,
+                    }));
+                    finalChanges.education = changedEducation.map((item: any) => ({
+                        id: item.id,
+                        ...item.optimized,
+                    }));
+                }
+
+                return { startingContent, finalChanges };
+            };
+
+            const { startingContent, finalChanges } = getChangedFieldsOnly();
+
+            console.log("Auto-saving changes for job ID:", jobId);
+
+            const response = await fetch(`${apiUrl}/saveChangedSession`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: jobId,
+                    startingContent: startingContent,
+                    finalChanges: finalChanges,
+                }),
+            });
+
+            if (response.ok) {
+                console.log("Changes auto-saved successfully, now refreshing job data...");
+                
+                // After saving successfully, refresh the job from backend
+                if (jobId && refreshJobByMongoId) {
+                    try {
+                        await refreshJobByMongoId(jobId);
+                        console.log("Job data refreshed successfully in session storage");
+                    } catch (err) {
+                        console.error('Error refreshing job in background:', err);
+                    }
+                }
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error("Failed to auto-save changes:", errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error("Error during auto-save:", error);
+            return false;
+        }
+    };
+
     const handleOptimizeWithAI = async () => {
         if (!jobDescription.trim()) {
             alert("Please enter a job description first.");
@@ -1521,25 +1838,27 @@ function App() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const optimizedData = await response.json();
+            const optimizedDataResult = await response.json();
 
             // Check if we got valid optimized data
             if (
-                optimizedData &&
-                (optimizedData.summary || optimizedData.workExperience)
+                optimizedDataResult &&
+                (optimizedDataResult.summary || optimizedDataResult.workExperience)
             ) {
                 // Store optimized data temporarily and show comparison view
-                setOptimizedData({
+                const newOptimizedData = {
                     ...resumeData,
-                    summary: optimizedData.summary || resumeData.summary,
+                    summary: optimizedDataResult.summary || resumeData.summary,
                     workExperience:
-                        optimizedData.workExperience ||
+                        optimizedDataResult.workExperience ||
                         resumeData.workExperience,
-                    skills: optimizedData.skills || resumeData.skills,
-                    education: optimizedData.education || resumeData.education,
+                    skills: optimizedDataResult.skills || resumeData.skills,
+                    education: optimizedDataResult.education || resumeData.education,
                     publications:
-                        optimizedData.publications || resumeData.publications,
-                });
+                        optimizedDataResult.publications || resumeData.publications,
+                };
+                
+                setOptimizedData(newOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
                 
                 // Update job in session storage to reflect changes immediately
@@ -1550,9 +1869,18 @@ function App() {
                     console.log("✅ Updated job in session storage to trigger re-render");
                 }
                 
-                alert(
-                    'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                // Auto-save changes to dashboard
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, newOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             } else {
                 alert(
                     "AI optimization failed. Please try again or edit your resume content manually."
@@ -1639,9 +1967,19 @@ function App() {
 
                 setOptimizedData(sampleOptimizedData);
                 setCurrentResumeView("optimized"); // Automatically switch to optimized view
-                alert(
-                    'Demo mode: AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-                );
+                
+                // Auto-save changes to dashboard
+                const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+                
+                if (saveSuccess) {
+                    alert(
+                        'Demo mode: AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                    );
+                } else {
+                    alert(
+                        'Demo mode: AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                    );
+                }
             }
         } catch (error) {
             console.error("Error optimizing resume:", error);
@@ -1669,9 +2007,19 @@ function App() {
 
             setOptimizedData(sampleOptimizedData);
             setCurrentResumeView("optimized"); // Automatically switch to optimized view
-            alert(
-                'AI optimization complete! Check the "Optimized Resume" tab to see and edit the enhanced content.'
-            );
+            
+            // Auto-save changes to dashboard
+            const saveSuccess = await autoSaveChangesToDashboard(resumeData, sampleOptimizedData);
+            
+            if (saveSuccess) {
+                alert(
+                    'AI optimization complete and changes saved to dashboard! Check the "Optimized Resume" tab to see and edit the enhanced content.'
+                );
+            } else {
+                alert(
+                    'AI optimization complete! However, there was an issue saving to dashboard. You can manually save using the "Show changes in dashboard" button.'
+                );
+            }
         } finally {
             setIsOptimizing(false);
         }
@@ -1702,12 +2050,13 @@ function App() {
                 token={token}
                 onLogout={handleLogout}
                 onSwitchToResumeBuilder={switchToResumeBuilder}
+                onSwitchToResumeMaker={switchToResumeMaker}
             />
         );
     }
 
     if (authView === "maker") {
-        return <Maker onEditResume={handleEditClientResume} />;
+        return <Maker onEditResume={handleEditClientResume} onBackToDashboard={backToAdminDashboard} />;
     }
 
     return (
@@ -1777,169 +2126,171 @@ function App() {
                                     </button>
                                 )}
 
-                                {/* Back to Maker Button - Only for Admin */}
-                                {userRole === "admin" && (
-                                    <button
-                                        onClick={() => setAuthView("maker")}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
-                                    >
-                                        <svg
-                                            className="h-4 w-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 19l-7-7 7-7"
-                                            />
-                                        </svg>
-                                        Back to Maker
-                                    </button>
-                                )}
-
-                                {/* Maker Button - Only for Admin */}
-                                {userRole === "admin" && (
-                                    <button
-                                        onClick={() => setAuthView("maker")}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
-                                    >
-                                        <svg
-                                            className="h-4 w-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                            />
-                                        </svg>
-                                        Resume Maker
-                                    </button>
-                                )}
-
-                                {/* View Changes Toggle - Only show when optimized data exists and user is on optimized view */}
-                                {optimizedData &&
-                                    currentResumeView === "optimized" && (
+                                {/* Navigation Buttons Grid */}
+                                <div className="flex flex-col gap-3">
+                                    {/* Row 1: Resume Editor, Changes Made, Hide Changes */}
+                                    <div className="flex items-center gap-3">
                                         <button
-                                            onClick={() =>
-                                                setShowChanges(!showChanges)
-                                            }
-                                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                                showChanges
-                                                    ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                                            onClick={() => {
+                                                setCurrentResumeView("editor");
+                                                setShowChanges(false);
+                                            }}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                                currentResumeView === "editor"
+                                                    ? "bg-blue-600 text-white"
                                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                             }`}
                                         >
-                                            {showChanges
-                                                ? " Hide Changes"
-                                                : " View Changes"}
+                                            Resume Editor
                                         </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setCurrentResumeView(
+                                                    optimizedData
+                                                        ? "optimized"
+                                                        : "changes"
+                                                );
+                                                if (!optimizedData)
+                                                    setShowChanges(false);
+                                            }}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                                currentResumeView === "optimized" ||
+                                                currentResumeView === "changes"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {optimizedData
+                                                ? "Optimized Resume"
+                                                : "Changes Made"}
+                                        </button>
+
+                                        {/* View Changes Toggle - Only show when optimized data exists and user is on optimized view */}
+                                        {optimizedData &&
+                                            currentResumeView === "optimized" && (
+                                                <button
+                                                    onClick={() =>
+                                                        setShowChanges(!showChanges)
+                                                    }
+                                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                                        showChanges
+                                                            ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                    }`}
+                                                >
+                                                    {showChanges
+                                                        ? "Hide Changes"
+                                                        : "View Changes"}
+                                                </button>
+                                            )}
+                                    </div>
+
+                                    {/* Row 2: Resume Maker & Back to Maker - Only show if came from maker */}
+                                    {userRole === "admin" && cameFromMaker && (
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setAuthView("maker")}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                                            >
+                                                <svg
+                                                    className="h-4 w-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M15 19l-7-7 7-7"
+                                                    />
+                                                </svg>
+                                                Back to Maker
+                                            </button>
+
+                                            <button
+                                                onClick={() => setAuthView("maker")}
+                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                                            >
+                                                <svg
+                                                    className="h-4 w-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                                    />
+                                                </svg>
+                                                Resume Maker
+                                            </button>
+                                        </div>
                                     )}
 
-                                {/* Navigation Buttons */}
-                                <nav className="flex space-x-4">
-                                    {userRole === "admin" && (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    setVersion(1);
-                                                    setShowModal(true);
-                                                }}
-                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                            >
-                                                All resume V1
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setVersion(2);
-                                                    setShowModal(true);
-                                                }}
-                                                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                            >
-                                                Medical resumes
-                                            </button>
-                                        </>
-                                    )}
+                                    {/* Row 3: All resumes V1, Medical resumes, All resumes */}
+                                    <div className="flex items-center gap-3">
+                                        {userRole === "admin" && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setVersion(1);
+                                                        setShowModal(true);
+                                                    }}
+                                                    className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                                >
+                                                    All resume V1
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setVersion(2);
+                                                        setShowModal(true);
+                                                    }}
+                                                    className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                                >
+                                                    Medical resumes
+                                                </button>
+                                            </>
+                                        )}
 
-                                    {/* All Resumes Button */}
-                                    <button
-                                        onClick={() => {
-                                            setVersion(0);
-                                            setShowModal(true);
-                                        }}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
-                                    >
-                                        All resumes
-                                    </button>
-                                    <ResumeSelectorModal
-                                        open={showModal}
-                                        onClose={() => {
-                                            setShowModal(false);
-                                            setCurrentResumeView("editor");
-                                        }}
-                                        onSelect={(
-                                            resume: ResumeDataType & {
-                                                checkboxStates?: any;
-                                            }
-                                        ) => {
-                                            setResumeData(resume);
-                                            setBaseResume(resume);
-                                            checkLoadedResumeData(resume);
-                                            lockAllSections();
-                                            setShowModal(false);
-                                            if (userRole === "admin") {
-                                                checkAdminAndUnlock();
-                                            }
-                                            setCurrentResumeView("editor");
+                                        <button
+                                            onClick={() => {
+                                                setVersion(0);
+                                                setShowModal(true);
+                                            }}
+                                            className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                                        >
+                                            All resumes
+                                        </button>
+                                    </div>
+                                </div>
 
-                                            // setModalVersion(null);
-                                        }}
-                                        version={versionV}
-                                    />
-
-                                    {/* Other nav buttons */}
-                                    <button
-                                        onClick={() => {
-                                            setCurrentResumeView("editor");
-                                            setShowChanges(false);
-                                        }}
-                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                            currentResumeView === "editor"
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                        }`}
-                                    >
-                                        Resume Editor
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setCurrentResumeView(
-                                                optimizedData
-                                                    ? "optimized"
-                                                    : "changes"
-                                            );
-                                            if (!optimizedData)
-                                                setShowChanges(false);
-                                        }}
-                                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                            currentResumeView === "optimized" ||
-                                            currentResumeView === "changes"
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                        }`}
-                                    >
-                                        {optimizedData
-                                            ? "Optimized Resume"
-                                            : "Changes Made"}
-                                    </button>
-                                </nav>
+                                <ResumeSelectorModal
+                                    open={showModal}
+                                    onClose={() => {
+                                        setShowModal(false);
+                                        setCurrentResumeView("editor");
+                                    }}
+                                    onSelect={(
+                                        resume: ResumeDataType & {
+                                            checkboxStates?: any;
+                                        }
+                                    ) => {
+                                        setResumeData(resume);
+                                        setBaseResume(resume);
+                                        checkLoadedResumeData(resume);
+                                        lockAllSections();
+                                        setShowModal(false);
+                                        if (userRole === "admin") {
+                                            checkAdminAndUnlock();
+                                        }
+                                        setCurrentResumeView("editor");
+                                    }}
+                                    version={versionV}
+                                />
                             </div>
                         </div>
                     </div>
@@ -2222,7 +2573,7 @@ function App() {
 
                                     {/* Optimize with AI Button - Also stays UNLOCKED */}
                                     <button
-                                        onClick={handleOptimizeWithAI}
+                                        onClick={() => setShowOptimizeConfirmation(true)}
                                         disabled={
                                             isOptimizing ||
                                             !jobDescription.trim()
@@ -2871,6 +3222,64 @@ function App() {
                     )}
                 </div>
             </div>
+            
+            {/* Optimize Confirmation Dialog */}
+            {showOptimizeConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                            Confirm Resume Optimization
+                        </h2>
+                        <div className="mb-8">
+                            <p className="text-lg text-gray-700 text-center mb-4">
+                                Do you want to optimize the resume for:
+                            </p>
+                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
+                                <div className="text-center">
+                                    <span className="text-3xl font-bold text-purple-700 block mb-3">
+                                        {resumeData.personalInfo?.name || "Unknown"}
+                                    </span>
+                                    <p className="text-xl text-gray-700 mb-2">at</p>
+                                    <div className="flex flex-wrap justify-center items-center gap-6">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl text-gray-700">Role:</span>
+                                            <span className="text-2xl font-bold text-blue-700">
+                                                {jobTitle || "Role not specified"}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl text-gray-700">Company:</span>
+                                            <span className="text-2xl font-bold text-blue-700">
+                                                {companyName || "Company not specified"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-sm text-gray-500 text-center mt-4">
+                                Please verify the name, role, and company name are correct before proceeding
+                            </p>
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => {
+                                    setShowOptimizeConfirmation(false);
+                                    handleOptimizeWithAI();
+                                }}
+                                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-lg"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setShowOptimizeConfirmation(false)}
+                                className="flex-1 bg-gray-300 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors font-semibold text-lg"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

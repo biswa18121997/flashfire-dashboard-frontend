@@ -5,6 +5,7 @@ import { toastUtils } from '../../../utils/toast';
 
 interface MakerProps {
   onEditResume?: (resume: any, client: any) => void;
+  onBackToDashboard?: () => void;
 }
 
 interface Client {
@@ -24,7 +25,7 @@ interface Resume {
   createdAt: string;
 }
 
-const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
+const Maker: React.FC<MakerProps> = ({ onEditResume, onBackToDashboard }) => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -34,9 +35,6 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newResumeName, setNewResumeName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authView, setAuthView] = useState<"login" | "admin" | "resume" | "maker">(
-    "maker"
-);
   
   // Track if we just created a new client to skip unnecessary refresh
   const skipNextRefresh = useRef(false);
@@ -317,7 +315,13 @@ const Maker: React.FC<MakerProps> = ({ onEditResume }) => {
             </div>
             <div>
               <button
-                onClick={() => setAuthView("admin") }
+                onClick={() => {
+                  if (onBackToDashboard) {
+                    onBackToDashboard();
+                  } else {
+                    navigate('/optimize/1');
+                  }
+                }}
                 className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
               >
                 <svg
