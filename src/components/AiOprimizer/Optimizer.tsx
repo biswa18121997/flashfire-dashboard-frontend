@@ -266,6 +266,11 @@ function App() {
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
+    
+    // Additional state variables for job details and optimization
+    const [companyName, setCompanyName] = useState<string>("");
+    const [jobTitle, setJobTitle] = useState<string>("");
+    const [showOptimizeConfirmation, setShowOptimizeConfirmation] = useState(false);
 
     // Always open in Editor on initial load
     useEffect(() => {
@@ -757,6 +762,16 @@ function App() {
                 console.log("✅ Job description set in store");
             } else {
                 console.log("⚠️ No job description found for this job");
+            }
+            
+            // Set company name and job title
+            if (data.companyName) {
+                setCompanyName(data.companyName);
+                console.log("✅ Company name set:", data.companyName);
+            }
+            if (data.jobTitle) {
+                setJobTitle(data.jobTitle);
+                console.log("✅ Job title set:", data.jobTitle);
             }
         } catch (error) {
             console.error("❌ Error fetching job description:", error);
@@ -2254,7 +2269,7 @@ function App() {
 
                                     {/* Optimize with AI Button - Also stays UNLOCKED */}
                                     <button
-                                        onClick={handleOptimizeWithAI}
+                                        onClick={() => setShowOptimizeConfirmation(true)}
                                         disabled={
                                             isOptimizing ||
                                             !jobDescription.trim()
@@ -2900,6 +2915,64 @@ function App() {
                     )}
                 </div>
             </div>
+            
+            {/* Optimize Confirmation Dialog */}
+            {showOptimizeConfirmation && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl mx-4">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                            Confirm Resume Optimization
+                        </h2>
+                        <div className="mb-8">
+                            <p className="text-lg text-gray-700 text-center mb-4">
+                                Do you want to optimize the resume for:
+                            </p>
+                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
+                                <div className="text-center">
+                                    <span className="text-3xl font-bold text-purple-700 block mb-3">
+                                        {resumeData.personalInfo?.name || "Unknown"}
+                                    </span>
+                                    <p className="text-xl text-gray-700 mb-2">at</p>
+                                    <div className="flex flex-wrap justify-center items-center gap-6">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl text-gray-700">Role:</span>
+                                            <span className="text-2xl font-bold text-blue-700">
+                                                {jobTitle || "Role not specified"}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl text-gray-700">Company:</span>
+                                            <span className="text-2xl font-bold text-blue-700">
+                                                {companyName || "Company not specified"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-sm text-gray-500 text-center mt-4">
+                                Please verify the name, role, and company name are correct before proceeding
+                            </p>
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => {
+                                    setShowOptimizeConfirmation(false);
+                                    handleOptimizeWithAI();
+                                }}
+                                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-lg"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setShowOptimizeConfirmation(false)}
+                                className="flex-1 bg-gray-300 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors font-semibold text-lg"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
