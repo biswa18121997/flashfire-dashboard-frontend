@@ -112,10 +112,16 @@ const Navigation: React.FC<NavigationProps> = ({
   const handleLogin = () => navigate("/login");
 
   const getInitials = (name: string) => {
-    if (!name) return "U";
-    const parts = name.trim().split(" ");
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return `${parts[0][0].toUpperCase()}${parts[1][0].toUpperCase()}`;
+    if (!name || typeof name !== 'string') return "U";
+    const trimmed = name.trim();
+    if (!trimmed) return "U";
+    const parts = trimmed.split(" ");
+    if (parts.length === 1) {
+      return parts[0] && parts[0][0] ? parts[0][0].toUpperCase() : "U";
+    }
+    const first = parts[0] && parts[0][0] ? parts[0][0].toUpperCase() : "";
+    const second = parts[1] && parts[1][0] ? parts[1][0].toUpperCase() : "";
+    return first + second || "U";
   };
 
   return (
