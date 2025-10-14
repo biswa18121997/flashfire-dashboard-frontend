@@ -706,7 +706,7 @@
 //     </div>
 //   );
 // }
-import { useState, useContext, type FormEvent } from "react"
+import { useState, useContext, useEffect, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, TrendingUp, Users, Award, Clock, ArrowRight } from "lucide-react"
 import { UserContext } from "../state_management/UserContext"
@@ -761,6 +761,31 @@ export default function Login() {
   const { setName, setEmailOperations, setRole, setManagedUsers } = useOperationsStore()
   const { setData } = useContext(UserContext)
   const { setProfileFromApi } = useUserProfile()
+
+  // Ensure Google Login button is full width
+  useEffect(() => {
+    const styleGoogleButton = () => {
+      const googleButton = document.querySelector('[data-testid="google-login-button"]') || 
+                          document.querySelector('[role="button"]') ||
+                          document.querySelector('iframe[src*="accounts.google.com"]')
+      
+      if (googleButton) {
+        (googleButton as HTMLElement).style.width = '100%'
+        ;(googleButton as HTMLElement).style.maxWidth = '100%'
+        ;(googleButton as HTMLElement).style.minWidth = '280px'
+      }
+    }
+
+    // Apply styles immediately and after a short delay
+    styleGoogleButton()
+    const timer = setTimeout(styleGoogleButton, 100)
+    const timer2 = setTimeout(styleGoogleButton, 500)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(timer2)
+    }
+  }, [])
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
@@ -910,15 +935,33 @@ export default function Login() {
           </div>
 
           {/* Google Button */}
-          <div className="mb-5 w-full flex justify-center">
-            <div className="w-full">
-              <GoogleLogin
-                text="continue_with"
-                size="large"
-                theme="outline"
-                width="100%"
-                shape="rectangular"
-                logo_alignment="left"
+          <div className="mb-5 w-full">
+            <div 
+              className="w-full"
+              style={{
+                width: '100%',
+                maxWidth: '100%'
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  minWidth: '280px'
+                }}
+              >
+                <GoogleLogin
+                  text="continue_with"
+                  size="large"
+                  theme="outline"
+                  width="100%"
+                  shape="rectangular"
+                  logo_alignment="left"
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '100%',
+                    minWidth: '280px'
+                  }}
                 onSuccess={async (credentialResponse) => {
                   const loadingToast = toastUtils.loading(toastMessages.loggingIn)
                   const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
@@ -961,9 +1004,10 @@ export default function Login() {
                     navigate("/")
                   }
                 }}
-                onError={() => console.log("Login Failed")}
-                useOneTap
-              />
+                  onError={() => console.log("Login Failed")}
+                  useOneTap
+                />
+              </div>
             </div>
           </div>
 
