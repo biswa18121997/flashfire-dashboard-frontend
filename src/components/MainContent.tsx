@@ -142,7 +142,7 @@ useEffect(() => {
       const response = await fetch(`${API_BASE_URL}/get-updated-user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userDetails.email }),
+        body: JSON.stringify({ email: userDetails?.email }),
       });
 
       if (!response.ok) throw new Error("Failed to fetch updated user data");
@@ -185,11 +185,11 @@ const [userProfileFormVisibility, setUserProfileFormVisibility] = useState(false
 const [welcomeShown, setWelcomeShown] = useState(()=>{
     return localStorage.getItem("welcomeShown")? true: false
   });
-useEffect(() => {
-  if (!userProfile) setUserProfileFormVisibility(true);
-  else setUserProfileFormVisibility(false);
-  console.log(userProfile)
-}, [userProfile]);
+// useEffect(() => {
+//  if (JSON.parse(localStorage.getItem('userAuth')).userProfile!=null) {console.log(userProfileFormVisibility,JSON.parse(localStorage.getItem('userAuth')).userProfile);setUserProfileFormVisibility(true);}
+//   else setUserProfileFormVisibility(false);
+//   console.log(userProfile)
+// }, [userProfile]);
 
 // console.log(userProfileFormVisibility,'vfcd')
   
