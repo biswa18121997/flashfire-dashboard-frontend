@@ -931,6 +931,7 @@ export default function Login() {
                     body: JSON.stringify({ token: credentialResponse.credential }),
                   })
                   const data = await res.json()
+                  
                   if (data?.message === "User not found") {
                     toastUtils.error(data?.message)
                     toastUtils.dismissToast(loadingToast)
@@ -965,7 +966,10 @@ export default function Login() {
                     navigate("/")
                   }
                 }}
-                onError={() => console.log("Login Failed")}
+                onError={() => {
+                  console.log("Login Failed")
+                  toastUtils.error("Google authentication failed")
+                }}
                 useOneTap
               />
             </div>
