@@ -2,70 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Google Login Button Full Width Fix - Ultra Aggressive */
+/* Google Login Button Full Width Fix */
 .google-login-wrapper {
-  width: 100% !important;
-  display: block !important;
+width: 100% !important;
+display: block !important;
 }
 
-.google-login-wrapper * {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 100% !important;
+.google-login-wrapper > div {
+width: 100% !important;
+display: block !important;
 }
 
-.google-login-wrapper > div,
-.google-login-wrapper > div > div,
-.google-login-wrapper > div > div > div {
-  width: 100% !important;
-  display: block !important;
+.google-login-wrapper > div > div {
+width: 100% !important;
+display: block !important;
 }
 
 .google-login-wrapper iframe {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 100% !important;
+width: 100% !important;
+max-width: 100% !important;
+min-width: 100% !important;
 }
 
-/* Target Google's internal button elements */
-.google-login-wrapper button,
-.google-login-wrapper button[type="button"],
-.google-login-wrapper div[role="button"] {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
-  display: block !important;
+/* Target Google's dynamically generated containers */
+div[id^="container-"] {
+width: 100% !important;
 }
 
-/* Google's specific class names - most aggressive */
-.nsm7Bb-HzV7m-LgbsSe,
-.nsm7Bb-HzV7m-LgbsSe-MJoBVe,
-div[class*="nsm7"] {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
+#credential_picker_container {
+width: 100% !important;
 }
 
-/* Additional targeting - override ALL inline styles */
-div[data-client-id],
-div[data-client-id] * {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-div[data-client-id] > div,
-div[id^="container-"],
-#credential_picker_container,
-#credential_picker_container iframe,
-#credential_picker_container * {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 100% !important;
-}
-
-/* Nuclear option - override ANY inline width styles in wrapper */
-.google-login-wrapper [style*="width"] {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 100% !important;
+#credential_picker_container iframe {
+width: 100% !important;
 }
