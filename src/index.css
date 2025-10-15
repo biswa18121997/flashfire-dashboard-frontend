@@ -5,34 +5,38 @@
 /* Google Login Button Full Width Fix */
 .google-login-wrapper {
   width: 100% !important;
-  display: block !important;
 }
 
 .google-login-wrapper > div {
   width: 100% !important;
-  display: block !important;
 }
 
 .google-login-wrapper > div > div {
   width: 100% !important;
-  display: block !important;
 }
 
 .google-login-wrapper iframe {
   width: 100% !important;
-  max-width: 100% !important;
+}
+
+/* Target Google's internal button elements */
+.google-login-wrapper button[type="button"],
+.google-login-wrapper div[role="button"] {
+  width: 100% !important;
   min-width: 100% !important;
 }
 
-/* Target Google's dynamically generated containers */
-div[id^="container-"] {
+/* Google's specific class names */
+.nsm7Bb-HzV7m-LgbsSe {
   width: 100% !important;
+  min-width: 100% !important;
 }
 
-#credential_picker_container {
-  width: 100% !important;
-}
-
+/* Additional targeting */
+div[data-client-id],
+div[data-client-id] > div,
+div[id^="container-"],
+#credential_picker_container,
 #credential_picker_container iframe {
   width: 100% !important;
 }
