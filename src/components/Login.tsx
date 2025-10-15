@@ -242,13 +242,12 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Google Button */}
-          <div className="mb-6 google-login-wrapper">
+          {/* Google Button - UPDATED with wrapper class */}
+          <div className="mb-6 google-login-wrapper w-full">
             <GoogleLogin
               text="continue_with"
               size="large"
               theme="outline"
-              width="400"
               shape="rectangular"
               logo_alignment="left"
               onSuccess={handleGoogleSuccess}
