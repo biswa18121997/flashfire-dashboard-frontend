@@ -765,46 +765,54 @@ export default function Login() {
   // Ensure Google Login button is full width
   useEffect(() => {
     const forceGoogleButtonWidth = () => {
-      // Target all possible Google button elements
+      // Target all possible Google button elements and force full width
       const selectors = [
         'iframe[src*="accounts.google.com"]',
         'div[role="button"][data-testid="google-login-button"]',
         'div[role="button"]',
         'div[data-testid="google-login-button"]',
-        'div[id*="google-login"]'
+        'div[id*="google-login"]',
+        '[data-testid="google-login-button"]',
+        'div[jsname="LgbsSe"]'
       ]
       
       selectors.forEach(selector => {
         const elements = document.querySelectorAll(selector)
         elements.forEach((element: Element) => {
           const htmlElement = element as HTMLElement
-          htmlElement.style.width = '100%'
-          htmlElement.style.maxWidth = '100%'
-          htmlElement.style.minWidth = '280px'
-          htmlElement.style.display = 'block'
+          htmlElement.style.setProperty('width', '100%', 'important')
+          htmlElement.style.setProperty('max-width', '100%', 'important')
+          htmlElement.style.setProperty('min-width', '280px', 'important')
+          htmlElement.style.setProperty('display', 'block', 'important')
         })
       })
     }
 
-    // Apply immediately
+    // Apply immediately and repeatedly
     forceGoogleButtonWidth()
     
-    // Apply with intervals to catch dynamically loaded elements
-    const intervals = [100, 300, 500, 1000, 2000].map(delay => 
+    // Apply with multiple intervals
+    const intervals = [50, 100, 200, 500, 1000, 2000, 3000, 5000].map(delay => 
       setTimeout(forceGoogleButtonWidth, delay)
     )
     
-    // Also use MutationObserver to catch DOM changes
-    const observer = new MutationObserver(forceGoogleButtonWidth)
+    // Use MutationObserver to catch DOM changes
+    const observer = new MutationObserver(() => {
+      setTimeout(forceGoogleButtonWidth, 10)
+    })
     observer.observe(document.body, { 
       childList: true, 
       subtree: true, 
       attributes: true,
-      attributeFilter: ['style', 'width']
+      attributeFilter: ['style', 'width', 'class']
     })
+
+    // Also use setInterval as backup
+    const intervalId = setInterval(forceGoogleButtonWidth, 1000)
 
     return () => {
       intervals.forEach(clearTimeout)
+      clearInterval(intervalId)
       observer.disconnect()
     }
   }, [])
@@ -958,43 +966,20 @@ export default function Login() {
 
           {/* Google Button */}
           <div className="mb-5 w-full">
-            <div 
-              className="w-full"
-              style={{
-                width: '100%',
-                maxWidth: '100%',
-                position: 'relative'
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
+            <div className="w-full">
+              <GoogleLogin
+                text="continue_with"
+                size="large"
+                theme="outline"
+                width="100%"
+                shape="rectangular"
+                logo_alignment="left"
+                style={{ 
+                  width: '100%', 
                   maxWidth: '100%',
-                  minWidth: '280px',
-                  position: 'relative'
+                  minWidth: '280px'
                 }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: '100%',
-                    minWidth: '280px',
-                    position: 'relative'
-                  }}
-                >
-                <GoogleLogin
-                  text="continue_with"
-                  size="large"
-                  theme="outline"
-                  width="100%"
-                  shape="rectangular"
-                  logo_alignment="left"
-                  style={{ 
-                    width: '100%', 
-                    maxWidth: '100%',
-                    minWidth: '280px'
-                  }}
-                  onSuccess={async (credentialResponse) => {
+                onSuccess={async (credentialResponse) => {
                   const loadingToast = toastUtils.loading(toastMessages.loggingIn)
                   const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
                     method: "POST",
@@ -1039,8 +1024,6 @@ export default function Login() {
                 onError={() => console.log("Login Failed")}
                 useOneTap
               />
-                </div>
-              </div>
             </div>
           </div>
 
