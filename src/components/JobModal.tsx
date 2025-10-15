@@ -1172,13 +1172,13 @@ useEffect(() => {
               {/* Image Grid */}
               <div className="h-96 overflow-auto rounded-lg border p-3">
                 {attachments.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1">
                     {attachments.map((url, idx) => (
                       <img
                         key={idx}
                         src={url}
                         alt={`Attachment-${idx}`}
-                        className="w-full h-40 object-cover rounded-md border cursor-zoom-in"
+                        className="w-full h-auto object-cover cursor-zoom-in"
                         draggable={false}
                         onClick={() => {
                           setSelectedImage(url);
