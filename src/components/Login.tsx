@@ -5,7 +5,13 @@ import { UserContext } from "../state_management/UserContext"
 import { useUserProfile } from "../state_management/ProfileContext"
 import { useOperationsStore } from "../state_management/Operations"
 import { toastUtils, toastMessages } from "../utils/toast"
-import { GoogleLogin } from "@react-oauth/google"
+
+// Google API types
+declare global {
+  interface Window {
+    google: any
+  }
+}
 
 interface LoginResponse {
   message: string
@@ -47,11 +53,12 @@ export default function Login() {
   const [password, setPassword] = useState<string>("")
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [response, setResponse] = useState<LoginResponse | null>(null)
+  const [, setResponse] = useState<LoginResponse | null>(null)
 
   const navigate = useNavigate()
   const { setName, setEmailOperations, setRole, setManagedUsers } = useOperationsStore()
-  const { setData } = useContext(UserContext)
+  const userContext = useContext(UserContext)
+  const setData = userContext?.setData
   const { setProfileFromApi } = useUserProfile()
 
   const handleLogin = async (e: FormEvent) => {
@@ -89,10 +96,9 @@ export default function Login() {
         }
       } else {
         if (data?.message === "Login Success..!") {
-          setData({
+          setData?.({
             userDetails: data?.userDetails,
-            token: data?.token,
-            userProfile: data?.userProfile,
+            token: data?.token || "",
           })
           setProfileFromApi(data?.userProfile)
           localStorage.setItem(
@@ -107,7 +113,10 @@ export default function Login() {
           toastUtils.success(toastMessages.loginSuccess)
           navigate("/")
         } else {
-          setData({})
+          setData?.({
+            userDetails: null,
+            token: ""
+          })
           toastUtils.dismissToast(loadingToast)
           toastUtils.error(data?.message || toastMessages.loginError)
         }
@@ -146,10 +155,9 @@ export default function Login() {
         toastUtils.success("Welcome to Operations Dashboard!")
         navigate("/manage")
       } else {
-        setData({
+        setData?.({
           userDetails: data?.userDetails,
-          token: data?.token,
-          userProfile: data?.userProfile,
+          token: data?.token || "",
         })
         setProfileFromApi(data?.userProfile)
         localStorage.setItem(
@@ -168,6 +176,13 @@ export default function Login() {
       console.error(err)
       toastUtils.dismissToast(loadingToast)
       toastUtils.error(toastMessages.networkError)
+    }
+  }
+
+  // Handle Google OAuth response
+  const handleGoogleResponse = async (response: any) => {
+    if (response.credential) {
+      await handleGoogleSuccess({ credential: response.credential })
     }
   }
 
@@ -228,75 +243,90 @@ export default function Login() {
 
       {/* RIGHT PANEL - WHITE CARD */}
       <div className="w-full lg:w-[480px] xl:w-[560px] flex flex-col justify-center px-6 md:px-12 py-12 bg-gray-50">
-        <div className="max-w-md mx-auto w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 md:p-10">
+        <div className="max-w-md mx-auto w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-7 md:p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Sign In</h3>
-            <p className="text-base text-gray-600">Enter your credentials to access your account</p>
+          <div className="mb-6">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Sign In</h3>
+            <p className="text-sm text-gray-600">Enter your credentials to access your account</p>
           </div>
 
           {/* Tabs */}
-          <div className="flex justify-center mb-8 border-b border-gray-200">
-            <button className="px-6 py-3 text-orange-600 font-semibold border-b-2 border-orange-600 -mb-[2px]">
+          <div className="flex justify-center mb-6 border-b border-gray-200">
+            <button className="px-4 py-2 text-orange-600 font-semibold border-b-2 border-orange-600 -mb-[2px] text-sm">
               Login
             </button>
           </div>
 
-          {/* Google Button - UPDATED with wrapper class */}
-          <div className="mb-6 google-login-wrapper w-full">
-            <GoogleLogin
-              text="continue_with"
-              size="large"
-              theme="outline"
-              shape="rectangular"
-              logo_alignment="left"
-              onSuccess={handleGoogleSuccess}
-              onError={() => console.log("Login Failed")}
-            />
-          </div>
+          {/* Custom Google Button - Fixed Display */}
+          <button
+            onClick={() => {
+              // Trigger Google OAuth flow
+              const script = document.createElement('script');
+              script.src = 'https://accounts.google.com/gsi/client';
+              script.onload = () => {
+                if (window.google) {
+                  window.google.accounts.id.initialize({
+                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id',
+                    callback: handleGoogleResponse
+                  });
+                  window.google.accounts.id.prompt();
+                }
+              };
+              document.head.appendChild(script);
+            }}
+            className="w-full mb-5 flex items-center justify-center gap-2 bg-white border-2 border-gray-300 rounded-lg py-3 px-4 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 shadow-sm hover:shadow-md text-sm"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span className="text-sm">Continue with Google</span>
+          </button>
 
           {/* Divider */}
-          <div className="flex items-center justify-center mb-6">
+          <div className="flex items-center justify-center mb-5">
             <hr className="flex-1 border-gray-300" />
-            <span className="mx-4 text-gray-500 text-sm font-medium">OR</span>
+            <span className="mx-3 text-gray-500 text-xs font-medium">OR</span>
             <hr className="flex-1 border-gray-300" />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Email *</label>
+              <label className="block text-xs font-semibold text-gray-900 mb-1">Email *</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="email"
                   placeholder="example@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all text-sm"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Password *</label>
+              <label className="block text-xs font-semibold text-gray-900 mb-1">Password *</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -305,23 +335,19 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full mt-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed group text-sm"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span className="text-lg">Sign In</span>
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  <span className="text-sm">Sign In</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-center text-sm text-gray-500">Protected by security</p>
-          </div>
         </div>
       </div>
     </div>
