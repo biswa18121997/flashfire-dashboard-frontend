@@ -764,26 +764,48 @@ export default function Login() {
 
   // Ensure Google Login button is full width
   useEffect(() => {
-    const styleGoogleButton = () => {
-      const googleButton = document.querySelector('[data-testid="google-login-button"]') || 
-                          document.querySelector('[role="button"]') ||
-                          document.querySelector('iframe[src*="accounts.google.com"]')
+    const forceGoogleButtonWidth = () => {
+      // Target all possible Google button elements
+      const selectors = [
+        'iframe[src*="accounts.google.com"]',
+        'div[role="button"][data-testid="google-login-button"]',
+        'div[role="button"]',
+        'div[data-testid="google-login-button"]',
+        'div[id*="google-login"]'
+      ]
       
-      if (googleButton) {
-        (googleButton as HTMLElement).style.width = '100%'
-        ;(googleButton as HTMLElement).style.maxWidth = '100%'
-        ;(googleButton as HTMLElement).style.minWidth = '280px'
-      }
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector)
+        elements.forEach((element: Element) => {
+          const htmlElement = element as HTMLElement
+          htmlElement.style.width = '100%'
+          htmlElement.style.maxWidth = '100%'
+          htmlElement.style.minWidth = '280px'
+          htmlElement.style.display = 'block'
+        })
+      })
     }
 
-    // Apply styles immediately and after a short delay
-    styleGoogleButton()
-    const timer = setTimeout(styleGoogleButton, 100)
-    const timer2 = setTimeout(styleGoogleButton, 500)
+    // Apply immediately
+    forceGoogleButtonWidth()
+    
+    // Apply with intervals to catch dynamically loaded elements
+    const intervals = [100, 300, 500, 1000, 2000].map(delay => 
+      setTimeout(forceGoogleButtonWidth, delay)
+    )
+    
+    // Also use MutationObserver to catch DOM changes
+    const observer = new MutationObserver(forceGoogleButtonWidth)
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true, 
+      attributes: true,
+      attributeFilter: ['style', 'width']
+    })
 
     return () => {
-      clearTimeout(timer)
-      clearTimeout(timer2)
+      intervals.forEach(clearTimeout)
+      observer.disconnect()
     }
   }, [])
 
@@ -940,16 +962,26 @@ export default function Login() {
               className="w-full"
               style={{
                 width: '100%',
-                maxWidth: '100%'
+                maxWidth: '100%',
+                position: 'relative'
               }}
             >
               <div
                 style={{
                   width: '100%',
                   maxWidth: '100%',
-                  minWidth: '280px'
+                  minWidth: '280px',
+                  position: 'relative'
                 }}
               >
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    minWidth: '280px',
+                    position: 'relative'
+                  }}
+                >
                 <GoogleLogin
                   text="continue_with"
                   size="large"
@@ -962,7 +994,7 @@ export default function Login() {
                     maxWidth: '100%',
                     minWidth: '280px'
                   }}
-                onSuccess={async (credentialResponse) => {
+                  onSuccess={async (credentialResponse) => {
                   const loadingToast = toastUtils.loading(toastMessages.loggingIn)
                   const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
                     method: "POST",
@@ -1004,9 +1036,10 @@ export default function Login() {
                     navigate("/")
                   }
                 }}
-                  onError={() => console.log("Login Failed")}
-                  useOneTap
-                />
+                onError={() => console.log("Login Failed")}
+                useOneTap
+              />
+                </div>
               </div>
             </div>
           </div>
