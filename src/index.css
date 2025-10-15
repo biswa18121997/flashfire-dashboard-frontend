@@ -1,39 +1,38 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Google Login Button Full Width Fix */
 .google-login-wrapper {
-width: 100% !important;
-display: block !important;
+  width: 100% !important;
+  display: block !important;
 }
 
 .google-login-wrapper > div {
-width: 100% !important;
-display: block !important;
+  width: 100% !important;
+  display: block !important;
 }
 
 .google-login-wrapper > div > div {
-width: 100% !important;
-display: block !important;
+  width: 100% !important;
+  display: block !important;
 }
 
 .google-login-wrapper iframe {
-width: 100% !important;
-max-width: 100% !important;
-min-width: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
 }
 
 /* Target Google's dynamically generated containers */
 div[id^="container-"] {
-width: 100% !important;
+  width: 100% !important;
 }
 
 #credential_picker_container {
-width: 100% !important;
+  width: 100% !important;
 }
 
 #credential_picker_container iframe {
-width: 100% !important;
+  width: 100% !important;
 }
