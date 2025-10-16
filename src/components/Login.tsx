@@ -198,7 +198,7 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full mb-5">
+         <div className="w-full mb-5 [&>div]:w-full">
             <GoogleLogin
               theme="outline"
               size="large"
@@ -325,3 +325,4 @@ export default function Login() {
     </div>
   )
 }
+
