@@ -198,7 +198,7 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full mb-5 flex justify-center">
+          <div className="w-full my-6 flex justify-center">
             <GoogleLogin
               theme="outline"
               size="large"
@@ -254,12 +254,12 @@ export default function Login() {
               onError={() => {
                 toastUtils.error("Google login failed. Please try again.")
               }}
-              useOneTap // This prop enables the "Continue as..." prompt
+              useOneTap
             />
           </div>
 
           {/* Divider */}
-          <div className="flex items-center justify-center mb-5">
+          <div className="flex items-center justify-center mb-6">
             <hr className="flex-1 border-gray-300" />
             <span className="mx-3 text-gray-500 text-xs font-medium">OR</span>
             <hr className="flex-1 border-gray-300" />
