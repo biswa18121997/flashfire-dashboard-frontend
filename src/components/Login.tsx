@@ -254,13 +254,17 @@ export default function Login() {
 
           {/* Google Login Button - Explicit popup (no One Tap) */}
           <div className="w-full mb-5">
-            <GoogleLogin
-              useOneTap={false}
-              text="continue_with"
-              onSuccess={handleGoogleSuccess}
-              onError={() => toastUtils.error('Google login failed. Please try again.')}
-              width="100%"
-            />
+            <div className="w-full" style={{ width: '100%' }}>
+              <GoogleLogin
+                useOneTap={false}
+                size="large"
+                text="continue_with"
+                theme="outline"
+                onSuccess={handleGoogleSuccess}
+                onError={() => toastUtils.error('Google login failed. Please try again.')}
+                width="400"
+              />
+            </div>
           </div>
 
           {/* Divider */}
