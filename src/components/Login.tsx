@@ -198,7 +198,7 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full my-6 flex justify-center">
+          <div className="w-full my-6 flex justify-center pl-5">
             <GoogleLogin
               theme="outline"
               size="large"
