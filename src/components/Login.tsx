@@ -1,7 +1,7 @@
 import { useState, useContext, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, TrendingUp, Users, Award, Clock, ArrowRight } from "lucide-react"
-import { GoogleLogin } from '@react-oauth/google'
+import { useEffect, useRef } from 'react'
 import { UserContext } from "../state_management/UserContext"
 import { useUserProfile } from "../state_management/ProfileContext"
 import { useOperationsStore } from "../state_management/Operations"
@@ -50,6 +50,7 @@ const statsData = [
 ]
 
 export default function Login() {
+  const googleBtnRef = useRef<HTMLDivElement | null>(null)
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -180,6 +181,48 @@ export default function Login() {
     }
   }
 
+  // Render full-width centered Google button with explicit popup
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID
+    if (!clientId) return
+    const ensureScript = () => new Promise<void>((resolve, reject) => {
+      if (window.google?.accounts?.id) return resolve()
+      const s = document.createElement('script')
+      s.src = 'https://accounts.google.com/gsi/client'
+      s.async = true
+      s.defer = true
+      s.onload = () => resolve()
+      s.onerror = () => reject(new Error('Failed to load Google script'))
+      document.head.appendChild(s)
+    })
+
+    ensureScript().then(() => {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (res: any) => handleGoogleSuccess(res),
+          use_fedcm_for_prompt: true,
+        })
+        if (googleBtnRef.current) {
+          // Render the button as a wide, centered, standard style
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            text: 'continue_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            width: 400,
+          })
+        }
+      } catch (_) {
+        // silent; UI remains usable
+      }
+    }).catch(() => {
+      // silent; UI remains usable
+    })
+  }, [])
+
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-orange-50 via-white to-red-50">
@@ -252,19 +295,9 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Google Login Button - Explicit popup (no One Tap) */}
+          {/* Google Login Button - Standard popup via renderButton (full width) */}
           <div className="w-full mb-5">
-            <div className="w-full" style={{ width: '100%' }}>
-              <GoogleLogin
-                useOneTap={false}
-                size="large"
-                text="continue_with"
-                theme="outline"
-                onSuccess={handleGoogleSuccess}
-                onError={() => toastUtils.error('Google login failed. Please try again.')}
-                width="400"
-              />
-            </div>
+            <div ref={googleBtnRef} className="w-full flex justify-center" style={{ width: '100%' }} />
           </div>
 
           {/* Divider */}
