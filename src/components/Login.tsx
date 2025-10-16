@@ -200,7 +200,6 @@ export default function Login() {
           {/* Google Login Button */}
           <div className="w-full mb-5">
             <GoogleLogin
-              width="100%"
               theme="outline"
               size="large"
               onSuccess={async (credentialResponse) => {
