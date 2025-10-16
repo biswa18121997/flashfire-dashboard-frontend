@@ -262,37 +262,41 @@ export default function Login() {
                   return;
                 }
 
-                // Use the Google OAuth library programmatically
+                // Load Google Identity Services and use ID token flow
                 const script = document.createElement('script');
                 script.src = 'https://accounts.google.com/gsi/client';
                 script.onload = () => {
-                  if (window.google) {
-                    try {
-                      window.google.accounts.oauth2.initTokenClient({
-                        client_id: clientId,
-                        scope: 'email profile',
-                        callback: async (response: any) => {
-                          if (response.access_token) {
-                            // Use the access token to get user info
-                            try {
-                              const userInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`);
-                              await userInfoResponse.json();
-                              
-                              // Send to your backend
-                              await handleGoogleSuccess({ credential: response.access_token });
-                            } catch (error) {
-                              toastUtils.error('Google login failed. Please try again.');
-                            }
-                          }
-                        },
-                        error_callback: () => {
+                  if (!window.google || !window.google.accounts?.id) {
+                    toastUtils.error('Google login failed. Please try again.');
+                    return;
+                  }
+
+                  try {
+                    // Initialize ID token flow (returns JWT in callback as `credential`)
+                    window.google.accounts.id.initialize({
+                      client_id: clientId,
+                      callback: async (response: any) => {
+                        if (response?.credential) {
+                          // Send ID token (JWT) to backend, which expects `token: credential`
+                          await handleGoogleSuccess({ credential: response.credential });
+                        } else {
                           toastUtils.error('Google login failed. Please try again.');
                         }
-                      }).requestAccessToken();
-                    } catch (error) {
-                      toastUtils.error('Google login failed. Please try again.');
-                    }
-                  } else {
+                      },
+                    });
+
+                    // Show a popup prompt to pick account; keeps our custom button UI
+                    window.google.accounts.id.prompt((notification: any) => {
+                      if (notification?.isNotDisplayed() || notification?.isSkippedMoment()) {
+                        // If One Tap cannot display, fallback to explicit account chooser
+                        try {
+                          window.google.accounts.id.prompt();
+                        } catch (_) {
+                          toastUtils.error('Google login was cancelled or blocked.');
+                        }
+                      }
+                    });
+                  } catch (_e) {
                     toastUtils.error('Google login failed. Please try again.');
                   }
                 };
