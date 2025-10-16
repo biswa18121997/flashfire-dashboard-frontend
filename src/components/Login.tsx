@@ -262,7 +262,7 @@ export default function Login() {
                  return;
                }
 
-               // Load Google Identity Services and use ID token flow
+              // Load Google Identity Services and use OAuth code flow (popup)
                const script = document.createElement('script');
                script.src = 'https://accounts.google.com/gsi/client';
                script.onload = () => {
@@ -272,30 +272,58 @@ export default function Login() {
                  }
 
                  try {
-                   // Initialize ID token flow (returns JWT in callback as `credential`)
-                   window.google.accounts.id.initialize({
-                     client_id: clientId,
-                     callback: async (response: any) => {
-                       if (response?.credential) {
-                         // Send ID token (JWT) to backend, which expects `token: credential`
-                         await handleGoogleSuccess({ credential: response.credential });
-                       } else {
-                         toastUtils.error('Google login failed. Please try again.');
-                       }
-                     },
-                   });
+                  const codeClient = window.google.accounts.oauth2.initCodeClient({
+                    client_id: clientId,
+                    scope: 'openid email profile',
+                    ux_mode: 'popup',
+                    callback: async (resp: any) => {
+                      if (resp?.code) {
+                        const loadingToast = toastUtils.loading(toastMessages.loggingIn);
+                        try {
+                          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: resp.code }),
+                          });
+                          const data = await res.json();
+                          if (data?.message === 'User not found') {
+                            toastUtils.error(data?.message);
+                            toastUtils.dismissToast(loadingToast);
+                            return;
+                          }
+                          if (data?.user?.email?.includes('@flashfirehq')) {
+                            setName(data.user.name);
+                            setEmailOperations(data.user.email);
+                            setRole(data.user.role);
+                            setManagedUsers(data.user.managedUsers);
+                            toastUtils.dismissToast(loadingToast);
+                            toastUtils.success('Welcome to Operations Dashboard!');
+                            navigate('/manage');
+                          } else {
+                            setData?.({
+                              userDetails: data?.userDetails,
+                              token: data?.token || '',
+                            });
+                            setProfileFromApi(data?.userProfile);
+                            localStorage.setItem('userAuth', JSON.stringify({
+                              token: data?.token,
+                              userDetails: data?.userDetails,
+                              userProfile: data?.userProfile,
+                            }));
+                            toastUtils.dismissToast(loadingToast);
+                            toastUtils.success(toastMessages.loginSuccess);
+                            navigate('/');
+                          }
+                        } catch (_) {
+                          toastUtils.error('Google login failed. Please try again.');
+                        }
+                      } else {
+                        toastUtils.error('Google login was cancelled or blocked.');
+                      }
+                    },
+                  });
 
-                   // Show a popup prompt to pick account; keeps our custom button UI
-                   window.google.accounts.id.prompt((notification: any) => {
-                     if (notification?.isNotDisplayed() || notification?.isSkippedMoment()) {
-                       // If One Tap cannot display, fallback to explicit account chooser
-                       try {
-                         window.google.accounts.id.prompt();
-                       } catch (_) {
-                         toastUtils.error('Google login was cancelled or blocked.');
-                       }
-                     }
-                   });
+                  codeClient.requestCode({ prompt: 'select_account' });
                  } catch (_e) {
                    toastUtils.error('Google login failed. Please try again.');
                  }
