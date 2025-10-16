@@ -198,11 +198,10 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full mb-5 [&>div]:w-full">
+          <div className="w-full mb-5 flex justify-center">
             <GoogleLogin
               theme="outline"
               size="large"
-              text="continue_with"
               onSuccess={async (credentialResponse) => {
                 const loadingToast = toastUtils.loading(toastMessages.loggingIn)
                 try {
@@ -255,6 +254,7 @@ export default function Login() {
               onError={() => {
                 toastUtils.error("Google login failed. Please try again.")
               }}
+              useOneTap // This prop enables the "Continue as..." prompt
             />
           </div>
 
@@ -291,7 +291,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
-                  onChange={(e) => setPassword(e.gittarget.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all text-sm"
                 />
                 <button
