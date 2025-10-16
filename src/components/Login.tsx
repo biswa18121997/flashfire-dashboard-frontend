@@ -271,62 +271,17 @@ export default function Login() {
                    return;
                  }
 
-                 try {
-                  const codeClient = window.google.accounts.oauth2.initCodeClient({
+                try {
+                  // Use Google Identity Services ID token flow to match backend expectation
+                  window.google.accounts.id.initialize({
                     client_id: clientId,
-                    scope: 'openid email profile',
-                    ux_mode: 'popup',
-                    callback: async (resp: any) => {
-                      if (resp?.code) {
-                        const loadingToast = toastUtils.loading(toastMessages.loggingIn);
-                        try {
-                          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code: resp.code }),
-                          });
-                          const data = await res.json();
-                          if (data?.message === 'User not found') {
-                            toastUtils.error(data?.message);
-                            toastUtils.dismissToast(loadingToast);
-                            return;
-                          }
-                          if (data?.user?.email?.includes('@flashfirehq')) {
-                            setName(data.user.name);
-                            setEmailOperations(data.user.email);
-                            setRole(data.user.role);
-                            setManagedUsers(data.user.managedUsers);
-                            toastUtils.dismissToast(loadingToast);
-                            toastUtils.success('Welcome to Operations Dashboard!');
-                            navigate('/manage');
-                          } else {
-                            setData?.({
-                              userDetails: data?.userDetails,
-                              token: data?.token || '',
-                            });
-                            setProfileFromApi(data?.userProfile);
-                            localStorage.setItem('userAuth', JSON.stringify({
-                              token: data?.token,
-                              userDetails: data?.userDetails,
-                              userProfile: data?.userProfile,
-                            }));
-                            toastUtils.dismissToast(loadingToast);
-                            toastUtils.success(toastMessages.loginSuccess);
-                            navigate('/');
-                          }
-                        } catch (_) {
-                          toastUtils.error('Google login failed. Please try again.');
-                        }
-                      } else {
-                        toastUtils.error('Google login was cancelled or blocked.');
-                      }
-                    },
+                    callback: handleGoogleSuccess,
                   });
-
-                  codeClient.requestCode({ prompt: 'select_account' });
-                 } catch (_e) {
-                   toastUtils.error('Google login failed. Please try again.');
-                 }
+                  // Trigger One Tap or account chooser; callback will send ID token
+                  window.google.accounts.id.prompt();
+                } catch (_e) {
+                  toastUtils.error('Google login failed. Please try again.');
+                }
                };
                script.onerror = () => {
                  toastUtils.error('Failed to load Google login. Please try again.');
