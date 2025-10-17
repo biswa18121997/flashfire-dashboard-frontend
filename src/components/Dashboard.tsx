@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
     const context = useContext(UserContext);
     const navigate = useNavigate();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const { userProfile, isProfileComplete } = useUserProfile();
+    const { userProfile } = useUserProfile();
 
     if (!context) {
         console.error("UserContext is null");
@@ -36,7 +36,6 @@ const Dashboard: React.FC = () => {
     const { userJobs, setUserJobs } = useUserJobs();
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
-    const [showWelcome, setShowWelcome] = useState(false);
     const [showJobForm, setShowJobForm] = useState(false);
     const { role } = useOperationsStore();
     
@@ -131,37 +130,20 @@ const Dashboard: React.FC = () => {
             return;
         }
 
-        // Show welcome only on first login
-        const welcomeFlag = localStorage.getItem('welcomeShown');
-        if (!welcomeFlag) {
-            // first time – show the message and set the flag
-            setShowWelcome(true);
-            localStorage.setItem('welcomeShown', 'true');
-        } else {
-            // not first time – don't show
-            setShowWelcome(false);
-        }
-
-        // Check if profile is complete
-        console.log("Dashboard - Profile completion check:", {
-            userProfile: userProfile,
-            isComplete: isProfileComplete(),
-            hasProfile: !!userProfile,
-        });
-
-        if (!isProfileComplete()) {
-            console.log("Profile incomplete, showing modal");
+        const hasProfileValue = sessionStorage.getItem('hasProfile');
+        
+        if (hasProfileValue === 'false') {
+            console.log("No profile - showing modal");
             setShowProfileModal(true);
         } else {
-            console.log("Profile complete, hiding modal");
+            console.log("Has profile or not checked - not showing modal");
             setShowProfileModal(false);
         }
 
-        // Only fetch if we don't have fresh data in session storage
         if (userJobs.length === 0) {
             FetchAllJobs(token, userDetails);
         }
-    }, [token, userDetails, userProfile]);
+    }, [token, userDetails]);
     
     // Use session storage stats instead of calculating from userJobs
     const stats = dashboardStats;
@@ -298,7 +280,10 @@ const Dashboard: React.FC = () => {
           mode="create"
           startSection="personal"
           onProfileComplete={() => {
-            console.log("Profile completed callback triggered");
+            console.log("Profile completed - closing modal and updating sessionStorage");
+            // Set sessionStorage to indicate profile exists now
+            sessionStorage.setItem('hasProfile', 'true');
+            // Close modal
             setShowProfileModal(false);
           }}
         />

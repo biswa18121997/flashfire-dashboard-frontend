@@ -12,6 +12,7 @@ interface LoginResponse {
   token?: string
   userDetails?: any
   userProfile?: any
+  hasProfile?: boolean
   user?: any
 }
 
@@ -93,9 +94,11 @@ export default function Login() {
           setData?.({
             userDetails: data?.userDetails,
             token: data?.token || "",
-            userProfile: data?.userProfile,
           })
           setProfileFromApi(data?.userProfile)
+          
+          sessionStorage.setItem('hasProfile', data?.hasProfile ? 'true' : 'false')
+          
           localStorage.setItem(
             "userAuth",
             JSON.stringify({
@@ -111,7 +114,6 @@ export default function Login() {
           setData?.({
             userDetails: null,
             token: "",
-            userProfile: null,
           })
           toastUtils.dismissToast(loadingToast)
           toastUtils.error(data?.message || toastMessages.loginError)
@@ -230,9 +232,11 @@ export default function Login() {
                     setData?.({
                       userDetails: data?.userDetails,
                       token: data?.token || "",
-                      userProfile: data?.userProfile,
                     })
                     setProfileFromApi(data?.userProfile)
+                    
+                    sessionStorage.setItem('hasProfile', data?.hasProfile ? 'true' : 'false')
+                    
                     localStorage.setItem(
                       "userAuth",
                       JSON.stringify({
