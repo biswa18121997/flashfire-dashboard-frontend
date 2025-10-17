@@ -22,7 +22,7 @@ import { toastUtils, toastMessages } from "../utils/toast";
 interface NavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  setUserProfileFormVisibility: any;
+  setUserProfileFormVisibility?: any; // Optional now
 }
 
 interface TabItem {
@@ -104,6 +104,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
   const handleLogout = () => {
     localStorage.clear();
+    sessionStorage.clear();
     setUser("");
     toastUtils.success(toastMessages.logoutSuccess);
     navigate("/login");
@@ -252,11 +253,13 @@ const Navigation: React.FC<NavigationProps> = ({
                         {!hasProfile && (
                           <div
                             className="w-fit"
-                            onClick={() =>
-                              setUserProfileFormVisibility(
-                                true
-                              )
-                            }
+                            onClick={() => {
+                              if (setUserProfileFormVisibility) {
+                                setUserProfileFormVisibility(true);
+                              } else {
+                                navigate('/profile');
+                              }
+                            }}
                           >
                             <div className="hover:cursor-pointer inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-50 to-yellow-200 text-amber-700 border-2 border-amber-200">
                               <Edit2Icon className="h-3 w-3 m-2" />{" "}
@@ -388,11 +391,14 @@ const Navigation: React.FC<NavigationProps> = ({
                         {!hasProfile && (
                           <div
                             className="w-fit"
-                            onClick={() =>
-                              setUserProfileFormVisibility(
-                                true
-                              )
-                            }
+                            onClick={() => {
+                              // Navigate to profile page or trigger modal
+                              if (setUserProfileFormVisibility) {
+                                setUserProfileFormVisibility(true);
+                              } else {
+                                navigate('/profile');
+                              }
+                            }}
                           >
                             <div className="hover:cursor-pointer inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-50 to-yellow-200 text-amber-700 border-2 border-amber-200">
                               <Edit2Icon className="h-3 w-3 m-2" />{" "}
