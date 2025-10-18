@@ -553,8 +553,7 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Google Login Button */}
-          {/* Google Login Button */}
+         {/* Google Login Button */}
 <div className="w-full my-6">
   <div 
     className="relative w-full google-button-container overflow-hidden rounded-lg"
@@ -612,9 +611,9 @@ export default function Login() {
       
       /* Main button styling - match email input exactly */
       #google-button-wrapper div[role="button"] {
-        border: 1px solid #d1d5db !important;
+        border: 1px solid #f97316 !important; /* Orange border for main state */
         border-radius: 8px !important;
-        background: #f9fafb !important;
+        background: #fef3c7 !important; /* Light orange background */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
         transition: all 0.2s ease !important;
         padding: 0 !important;
@@ -640,21 +639,21 @@ export default function Login() {
         box-shadow: 0 1px 2px 0 rgba(234, 88, 12, 0.05) !important;
       }
       
-      /* Inner content wrapper - force full width and center */
+      /* Inner content wrapper - left-aligned for standard look */
       #google-button-wrapper div[role="button"] > div {
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important; /* Changed to flex-start for left alignment */
         gap: 12px !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0 20px !important; /* Add horizontal padding for better spacing */
       }
       
-      /* Text styling */
+      /* Text styling - orange tint */
       #google-button-wrapper div[role="button"] div[style*="color"],
       #google-button-wrapper div[role="button"] span {
-        color: #374151 !important;
+        color: #9a3412 !important; /* Darker orange for text */
         font-weight: 500 !important;
         font-size: 14px !important;
         letter-spacing: 0.025em !important;
@@ -852,4 +851,5 @@ export default function Login() {
     </div>
   )
 }
+
 
