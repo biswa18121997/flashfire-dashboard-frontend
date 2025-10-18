@@ -554,192 +554,235 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full my-6">
-            <div 
-              className="relative w-full google-button-container"
-              id="google-button-wrapper"
-            >
-              <style>{`
-                /* Force full width container */
-                #google-button-wrapper {
-                  display: block !important;
-                  width: 100% !important;
-                }
-                
-                /* Target the outer Google wrapper div */
-                #google-button-wrapper > div {
-                  width: 100% !important;
-                  display: block !important;
-                }
-                
-                /* Target the iframe container */
-                #google-button-wrapper > div > div {
-                  width: 100% !important;
-                  display: block !important;
-                }
-                
-                /* Target the actual button with role="button" - both states (before and after auth) */
-                #google-button-wrapper div[role="button"],
-                #google-button-wrapper iframe {
-                  width: 100% !important;
-                  max-width: 100% !important;
-                  min-width: 100% !important;
-                  display: block !important;
-                }
-                
-                /* Main button styling */
-                #google-button-wrapper div[role="button"] {
-                  border: 2px solid #e5e7eb !important;
-                  border-radius: 12px !important;
-                  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
-                  transition: all 0.3s ease !important;
-                  padding: 12px 16px !important;
-                  min-height: 48px !important;
-                  height: 48px !important;
-                  font-family: inherit !important;
-                  box-sizing: border-box !important;
-                }
-                
-                /* Hover state */
-                #google-button-wrapper div[role="button"]:hover {
-                  border-color: #ea580c !important;
-                  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%) !important;
-                  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.15), 0 2px 6px rgba(234, 88, 12, 0.08) !important;
-                  transform: translateY(-1px) !important;
-                }
-                
-                /* Active state */
-                #google-button-wrapper div[role="button"]:active {
-                  transform: translateY(0px) !important;
-                  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.12) !important;
-                }
-                
-                /* Inner content wrapper - force full width */
-                #google-button-wrapper div[role="button"] > div {
-                  width: 100% !important;
-                  display: flex !important;
-                  align-items: center !important;
-                  justify-content: center !important;
-                  gap: 12px !important;
-                }
-                
-                /* Text styling */
-                #google-button-wrapper div[role="button"] div[style*="color"],
-                #google-button-wrapper div[role="button"] span {
-                  color: #374151 !important;
-                  font-weight: 600 !important;
-                  font-size: 14px !important;
-                  letter-spacing: 0.025em !important;
-                  white-space: nowrap !important;
-                }
-                
-                /* Hover text color */
-                #google-button-wrapper div[role="button"]:hover div[style*="color"],
-                #google-button-wrapper div[role="button"]:hover span {
-                  color: #ea580c !important;
-                }
-                
-                /* Google icon styling */
-                #google-button-wrapper div[role="button"] svg {
-                  filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) !important;
-                  flex-shrink: 0 !important;
-                }
-                
-                /* Hover icon color */
-                #google-button-wrapper div[role="button"]:hover svg {
-                  filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(346deg) brightness(118%) contrast(119%) !important;
-                }
-                
-                /* User profile image (after authentication) - keep it small and contained */
-                #google-button-wrapper div[role="button"] img {
-                  width: 24px !important;
-                  height: 24px !important;
-                  min-width: 24px !important;
-                  min-height: 24px !important;
-                  max-width: 24px !important;
-                  max-height: 24px !important;
-                  border-radius: 50% !important;
-                  flex-shrink: 0 !important;
-                  object-fit: cover !important;
-                }
-                
-                /* Ensure iframe has consistent width */
-                #google-button-wrapper iframe {
-                  height: 48px !important;
-                  border-radius: 12px !important;
-                  border: 2px solid #e5e7eb !important;
-                }
-              `}</style>
-              <GoogleLogin
-                key={`google-login-button-${googleButtonKey}`}
-                theme="outline"
-                size="large"
-                shape="rectangular"
-                text="continue_with"
-                width="400"
-                useOneTap={false}
-                auto_select={false}
-                cancel_on_tap_outside={true}
-                prompt="select_account"
-                ux_mode="popup"
-                onSuccess={async (credentialResponse) => {
-                  const loadingToast = toastUtils.loading(toastMessages.loggingIn)
-                  try {
-                    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ token: credentialResponse.credential }),
-                    })
-                    const data = await res.json()
+          {/* Google Login Button */}
+<div className="w-full my-6">
+  <div 
+    className="relative w-full google-button-container overflow-hidden rounded-lg"
+    id="google-button-wrapper"
+  >
+    <style>{`
+      /* Reset and force consistent styling */
+      #google-button-wrapper {
+        display: block !important;
+        width: 100% !important;
+        height: 42px !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        background: transparent !important;
+        border: none !important;
+      }
+      
+      /* Remove all background elements and lines */
+      #google-button-wrapper > div,
+      #google-button-wrapper > div > div,
+      #google-button-wrapper iframe {
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      
+      /* Force full width container */
+      #google-button-wrapper > div {
+        width: 100% !important;
+        display: block !important;
+        background: transparent !important;
+      }
+      
+      /* Target the iframe container */
+      #google-button-wrapper > div > div {
+        width: 100% !important;
+        display: block !important;
+        background: transparent !important;
+        border: none !important;
+      }
+      
+      /* Target the actual button with role="button" - both states */
+      #google-button-wrapper div[role="button"],
+      #google-button-wrapper iframe {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        display: block !important;
+        background: transparent !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* Main button styling - match email input exactly */
+      #google-button-wrapper div[role="button"] {
+        border: 1px solid #d1d5db !important;
+        border-radius: 8px !important;
+        background: #f9fafb !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        min-height: 42px !important;
+        height: 42px !important;
+        font-family: inherit !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      
+      /* Hover state */
+      #google-button-wrapper div[role="button"]:hover {
+        border-color: #ea580c !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(234, 88, 12, 0.1), 0 1px 2px 0 rgba(234, 88, 12, 0.06) !important;
+      }
+      
+      /* Active state */
+      #google-button-wrapper div[role="button"]:active {
+        transform: translateY(0px) !important;
+        box-shadow: 0 1px 2px 0 rgba(234, 88, 12, 0.05) !important;
+      }
+      
+      /* Inner content wrapper - force full width and center */
+      #google-button-wrapper div[role="button"] > div {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* Text styling */
+      #google-button-wrapper div[role="button"] div[style*="color"],
+      #google-button-wrapper div[role="button"] span {
+        color: #374151 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        letter-spacing: 0.025em !important;
+        white-space: nowrap !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      }
+      
+      /* Hover text color */
+      #google-button-wrapper div[role="button"]:hover div[style*="color"],
+      #google-button-wrapper div[role="button"]:hover span {
+        color: #ea580c !important;
+      }
+      
+      /* Google icon styling */
+      #google-button-wrapper div[role="button"] svg {
+        width: 18px !important;
+        height: 18px !important;
+        flex-shrink: 0 !important;
+      }
+      
+      /* User profile image (after authentication) - fixed size */
+      #google-button-wrapper div[role="button"] img {
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
+        max-width: 20px !important;
+        max-height: 20px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+        object-fit: cover !important;
+      }
+      
+      /* Ensure iframe has consistent width and no borders */
+      #google-button-wrapper iframe {
+        height: 42px !important;
+        border-radius: 8px !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      
+      /* Hide any shadow DOM elements that might cause lines */
+      #google-button-wrapper ::before,
+      #google-button-wrapper ::after,
+      #google-button-wrapper *::before,
+      #google-button-wrapper *::after {
+        display: none !important;
+        content: none !important;
+      }
+      
+      /* Nuclear option: hide any element that might be causing the line */
+      #google-button-wrapper div[style*="border"],
+      #google-button-wrapper div[style*="background"],
+      #google-button-wrapper div[style*="line"] {
+        border: none !important;
+        background: transparent !important;
+        display: none !important;
+      }
+    `}</style>
+    <GoogleLogin
+      key={`google-login-button-${googleButtonKey}`}
+      theme="outline"
+      size="large"
+      shape="rectangular"
+      text="continue_with"
+      width="400"
+      useOneTap={false}
+      auto_select={false}
+      cancel_on_tap_outside={true}
+      prompt="select_account"
+      ux_mode="popup"
+      onSuccess={async (credentialResponse) => {
+        const loadingToast = toastUtils.loading(toastMessages.loggingIn)
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/google-oauth`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: credentialResponse.credential }),
+          })
+          const data = await res.json()
 
-                    if (data?.message === "User not found") {
-                      toastUtils.dismissToast(loadingToast)
-                      toastUtils.error("Account does not exist. Please register first.")
-                      return
-                    }
+          if (data?.message === "User not found") {
+            toastUtils.dismissToast(loadingToast)
+            toastUtils.error("Account does not exist. Please register first.")
+            return
+          }
 
-                    if (data?.user?.email?.includes("@flashfirehq")) {
-                      setName(data.user.name)
-                      setEmailOperations(data.user.email)
-                      setRole(data.user.role)
-                      setManagedUsers(data.user.managedUsers)
-                      toastUtils.dismissToast(loadingToast)
-                      toastUtils.success("Welcome to Operations Dashboard!")
-                      navigate("/manage")
-                    } else {
-                      setData?.({
-                        userDetails: data?.userDetails,
-                        token: data?.token || "",
-                      })
-                      setProfileFromApi(data?.userProfile)
-                      
-                      sessionStorage.setItem('hasProfile', data?.hasProfile ? 'true' : 'false')
-                      
-                      localStorage.setItem(
-                        "userAuth",
-                        JSON.stringify({
-                          token: data?.token,
-                          userDetails: data?.userDetails,
-                          userProfile: data?.userProfile,
-                        }),
-                      )
-                      toastUtils.dismissToast(loadingToast)
-                      toastUtils.success(toastMessages.loginSuccess)
-                      navigate("/")
-                    }
-                  } catch (err) {
-                    console.error(err)
-                    toastUtils.dismissToast(loadingToast)
-                    toastUtils.error(toastMessages.networkError)
-                  }
-                }}
-                onError={() => {
-                  toastUtils.error("Google login failed. Please try again.")
-                }}
-              />
-            </div>
-          </div>
+          if (data?.user?.email?.includes("@flashfirehq")) {
+            setName(data.user.name)
+            setEmailOperations(data.user.email)
+            setRole(data.user.role)
+            setManagedUsers(data.user.managedUsers)
+            toastUtils.dismissToast(loadingToast)
+            toastUtils.success("Welcome to Operations Dashboard!")
+            navigate("/manage")
+          } else {
+            setData?.({
+              userDetails: data?.userDetails,
+              token: data?.token || "",
+            })
+            setProfileFromApi(data?.userProfile)
+            
+            sessionStorage.setItem('hasProfile', data?.hasProfile ? 'true' : 'false')
+            
+            localStorage.setItem(
+              "userAuth",
+              JSON.stringify({
+                token: data?.token,
+                userDetails: data?.userDetails,
+                userProfile: data?.userProfile,
+              }),
+            )
+            toastUtils.dismissToast(loadingToast)
+            toastUtils.success(toastMessages.loginSuccess)
+            navigate("/")
+          }
+        } catch (err) {
+          console.error(err)
+          toastUtils.dismissToast(loadingToast)
+          toastUtils.error(toastMessages.networkError)
+        }
+      }}
+      onError={() => {
+        toastUtils.error("Google login failed. Please try again.")
+      }}
+    />
+  </div>
+</div>
 
           {/* Divider */}
           <div className="flex items-center justify-center mb-6">
@@ -809,3 +852,4 @@ export default function Login() {
     </div>
   )
 }
+
