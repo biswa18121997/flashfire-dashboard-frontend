@@ -647,7 +647,7 @@ export default function Login() {
         justify-content: flex-start !important; /* Changed to flex-start for left alignment */
         gap: 12px !important;
         margin: 0 !important;
-        padding: 0 20px !important; /* Add horizontal padding for better spacing */
+        padding: 0 40px !important; /* Add horizontal padding for better spacing */
       }
       
       /* Text styling - orange tint */
@@ -851,6 +851,7 @@ export default function Login() {
     </div>
   )
 }
+
 
 
 
