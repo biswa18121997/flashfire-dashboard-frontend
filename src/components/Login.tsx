@@ -554,14 +554,41 @@ export default function Login() {
           </div>
 
           {/* Google Login Button */}
-          <div className="w-full my-6 flex justify-center">
+          <div className="w-full my-6">
             <div 
               className="relative w-full google-button-container"
               id="google-button-wrapper"
             >
               <style>{`
-                #google-button-wrapper div[role="button"] {
+                /* Force full width container */
+                #google-button-wrapper {
+                  display: block !important;
                   width: 100% !important;
+                }
+                
+                /* Target the outer Google wrapper div */
+                #google-button-wrapper > div {
+                  width: 100% !important;
+                  display: block !important;
+                }
+                
+                /* Target the iframe container */
+                #google-button-wrapper > div > div {
+                  width: 100% !important;
+                  display: block !important;
+                }
+                
+                /* Target the actual button with role="button" - both states (before and after auth) */
+                #google-button-wrapper div[role="button"],
+                #google-button-wrapper iframe {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  min-width: 100% !important;
+                  display: block !important;
+                }
+                
+                /* Main button styling */
+                #google-button-wrapper div[role="button"] {
                   border: 2px solid #e5e7eb !important;
                   border-radius: 12px !important;
                   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
@@ -569,9 +596,12 @@ export default function Login() {
                   transition: all 0.3s ease !important;
                   padding: 12px 16px !important;
                   min-height: 48px !important;
+                  height: 48px !important;
                   font-family: inherit !important;
+                  box-sizing: border-box !important;
                 }
                 
+                /* Hover state */
                 #google-button-wrapper div[role="button"]:hover {
                   border-color: #ea580c !important;
                   background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%) !important;
@@ -579,28 +609,66 @@ export default function Login() {
                   transform: translateY(-1px) !important;
                 }
                 
+                /* Active state */
                 #google-button-wrapper div[role="button"]:active {
                   transform: translateY(0px) !important;
                   box-shadow: 0 2px 8px rgba(234, 88, 12, 0.12) !important;
                 }
                 
-                #google-button-wrapper div[role="button"] div[style*="color"] {
+                /* Inner content wrapper - force full width */
+                #google-button-wrapper div[role="button"] > div {
+                  width: 100% !important;
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  gap: 12px !important;
+                }
+                
+                /* Text styling */
+                #google-button-wrapper div[role="button"] div[style*="color"],
+                #google-button-wrapper div[role="button"] span {
                   color: #374151 !important;
                   font-weight: 600 !important;
                   font-size: 14px !important;
                   letter-spacing: 0.025em !important;
+                  white-space: nowrap !important;
                 }
                 
-                #google-button-wrapper div[role="button"]:hover div[style*="color"] {
+                /* Hover text color */
+                #google-button-wrapper div[role="button"]:hover div[style*="color"],
+                #google-button-wrapper div[role="button"]:hover span {
                   color: #ea580c !important;
                 }
                 
+                /* Google icon styling */
                 #google-button-wrapper div[role="button"] svg {
                   filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) !important;
+                  flex-shrink: 0 !important;
                 }
                 
+                /* Hover icon color */
                 #google-button-wrapper div[role="button"]:hover svg {
                   filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(346deg) brightness(118%) contrast(119%) !important;
+                }
+                
+                /* User profile image (after authentication) - keep it small and contained */
+                #google-button-wrapper div[role="button"] img {
+                  width: 24px !important;
+                  height: 24px !important;
+                  min-width: 24px !important;
+                  min-height: 24px !important;
+                  max-width: 24px !important;
+                  max-height: 24px !important;
+                  border-radius: 50% !important;
+                  flex-shrink: 0 !important;
+                  object-fit: cover !important;
+                }
+                
+                /* Ensure iframe has consistent width */
+                #google-button-wrapper iframe {
+                  height: 48px !important;
+                  border-radius: 12px !important;
+                  border: 2px solid #e5e7eb !important;
                 }
               `}</style>
               <GoogleLogin
@@ -609,6 +677,7 @@ export default function Login() {
                 size="large"
                 shape="rectangular"
                 text="continue_with"
+                width="400"
                 useOneTap={false}
                 auto_select={false}
                 cancel_on_tap_outside={true}
@@ -740,12 +809,3 @@ export default function Login() {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
