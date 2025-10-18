@@ -611,9 +611,9 @@ export default function Login() {
       
       /* Main button styling - match email input exactly */
       #google-button-wrapper div[role="button"] {
-        border: 1px solid #f97316 !important; /* Orange border for main state */
+        border: 1px solid #d1d5db !important; /* Orange border for main state */
         border-radius: 8px !important;
-        background: #fef3c7 !important; /* Light orange background */
+        background: #f9fafb !important; /* Light orange background */
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
         transition: all 0.2s ease !important;
         padding: 0 !important;
@@ -653,7 +653,7 @@ export default function Login() {
       /* Text styling - orange tint */
       #google-button-wrapper div[role="button"] div[style*="color"],
       #google-button-wrapper div[role="button"] span {
-        color: #9a3412 !important; /* Darker orange for text */
+        color: #374151 !important; /* Darker orange for text */
         font-weight: 500 !important;
         font-size: 14px !important;
         letter-spacing: 0.025em !important;
@@ -851,5 +851,6 @@ export default function Login() {
     </div>
   )
 }
+
 
 
