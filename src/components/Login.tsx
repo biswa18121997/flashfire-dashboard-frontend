@@ -556,7 +556,7 @@ export default function Login() {
           {/* Google Login Button */}
           <div className="w-full my-6">
             <div 
-              className="relative w-full google-button-container"
+              className="relative w-full google-button-container overflow-hidden"
               id="google-button-wrapper"
             >
               <style>{`
@@ -564,18 +564,21 @@ export default function Login() {
                 #google-button-wrapper {
                   display: block !important;
                   width: 100% !important;
+                  overflow: hidden !important;
                 }
                 
                 /* Target the outer Google wrapper div */
                 #google-button-wrapper > div {
                   width: 100% !important;
                   display: block !important;
+                  overflow: hidden !important;
                 }
                 
                 /* Target the iframe container */
                 #google-button-wrapper > div > div {
                   width: 100% !important;
                   display: block !important;
+                  overflow: hidden !important;
                 }
                 
                 /* Target the actual button with role="button" - both states (before and after auth) */
@@ -599,6 +602,29 @@ export default function Login() {
                   height: 48px !important;
                   font-family: inherit !important;
                   box-sizing: border-box !important;
+                  overflow: hidden !important;
+                  position: relative !important;
+                  z-index: 10 !important;
+                }
+                
+                #google-button-wrapper div[role="button"]::before,
+                #google-button-wrapper div[role="button"]::after {
+                  display: none !important;
+                  content: none !important;
+                }
+                
+                #google-button-wrapper > div > div:first-child {
+                  display: none !important;
+                }
+                
+                #google-button-wrapper * {
+                  background-image: none !important;
+                }
+                
+                #google-button-wrapper div:not([role="button"]):not([role="button"] *) {
+                  background: transparent !important;
+                  border: none !important;
+                  box-shadow: none !important;
                 }
                 
                 /* Hover state */
@@ -609,19 +635,18 @@ export default function Login() {
                   transform: translateY(-1px) !important;
                 }
                 
-                /* Active state */
                 #google-button-wrapper div[role="button"]:active {
                   transform: translateY(0px) !important;
                   box-shadow: 0 2px 8px rgba(234, 88, 12, 0.12) !important;
                 }
                 
-                /* Inner content wrapper - force full width */
                 #google-button-wrapper div[role="button"] > div {
                   width: 100% !important;
                   display: flex !important;
                   align-items: center !important;
                   justify-content: center !important;
                   gap: 12px !important;
+                  background: transparent !important;
                 }
                 
                 /* Text styling */
@@ -632,6 +657,7 @@ export default function Login() {
                   font-size: 14px !important;
                   letter-spacing: 0.025em !important;
                   white-space: nowrap !important;
+                  background: transparent !important;
                 }
                 
                 /* Hover text color */
@@ -644,6 +670,7 @@ export default function Login() {
                 #google-button-wrapper div[role="button"] svg {
                   filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%) !important;
                   flex-shrink: 0 !important;
+                  background: transparent !important;
                 }
                 
                 /* Hover icon color */
@@ -662,13 +689,16 @@ export default function Login() {
                   border-radius: 50% !important;
                   flex-shrink: 0 !important;
                   object-fit: cover !important;
+                  background: transparent !important;
                 }
                 
-                /* Ensure iframe has consistent width */
+                /* Ensure iframe has consistent width and no background decorations */
                 #google-button-wrapper iframe {
                   height: 48px !important;
                   border-radius: 12px !important;
                   border: 2px solid #e5e7eb !important;
+                  background: transparent !important;
+                  overflow: hidden !important;
                 }
               `}</style>
               <GoogleLogin
@@ -809,3 +839,4 @@ export default function Login() {
     </div>
   )
 }
+
