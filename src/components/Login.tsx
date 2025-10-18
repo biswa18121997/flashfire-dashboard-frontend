@@ -600,15 +600,6 @@ function Login() {
     );
 }
 
-// Main App component to wrap Login with necessary providers
-export default function App() {
-    return (
-        <ToastProvider>
-            <Login />
-        </ToastProvider>
-    );
-}
-
 
 
 
