@@ -453,7 +453,7 @@ const statsData = [
     { value: "24/7", label: "AI Working", icon: <Clock className="w-5 h-5" />, color: "text-purple-600" },
 ];
 
-function Login() {
+export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -599,6 +599,8 @@ function Login() {
         </div>
     );
 }
+
+
 
 
 
