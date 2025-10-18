@@ -376,7 +376,7 @@ const ToastProvider = ({ children }) => {
             {children}
             <div className="fixed top-5 right-5 z-50 space-y-2">
                 {toasts.map(toast => (
-                    <div key={toast.id} className={`px-4 py-2 rounded-md shadow-lg text-sm font-medium animate-pulse ${toastStyles[toast.type]}`}>
+                    <div key={toast.id} className={`px-4 py-2 rounded-md shadow-lg text-sm font-medium ${toastStyles[toast.type]}`}>
                         {toast.message}
                     </div>
                 ))}
@@ -453,7 +453,8 @@ const statsData = [
     { value: "24/7", label: "AI Working", icon: <Clock className="w-5 h-5" />, color: "text-purple-600" },
 ];
 
-export default function Login() {
+// This is the main login component logic
+function LoginComponent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -599,6 +600,18 @@ export default function Login() {
         </div>
     );
 }
+
+// The default export is a new component that provides the necessary context to the LoginComponent.
+// This resolves the context error while keeping the main login logic separate.
+export default function Login() {
+    return (
+        <ToastProvider>
+            <LoginComponent />
+        </ToastProvider>
+    );
+}
+
+
 
 
 
