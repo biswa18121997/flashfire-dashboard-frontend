@@ -139,7 +139,7 @@ const Navigation: React.FC<NavigationProps> = ({
               <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                 FLASHFIRE
               </h1>
-              <p className="text-xs text-gray-500 font-medium -mt-1">Complete Workflow Optimization</p>
+              <p className="text-xs text-gray-500 font-medium -mt-1">Your Dream. Our Passion</p>
             </div>
           </div>
           {/* Desktop Tabs */}
