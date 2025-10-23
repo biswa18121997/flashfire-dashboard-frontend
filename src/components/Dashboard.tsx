@@ -320,8 +320,7 @@ const Dashboard: React.FC = () => {
                 </span>
               </h1>
               <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl">
-                Track your job applications, monitor your progress, and optimize your career journey with{"   "}   
-                <span className="font-semibold text-orange-600">AI-powered insights</span>.
+                Every role tracked. Every milestone celebrated. Your journey to success starts here.
               </p>
             </div>
 
