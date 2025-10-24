@@ -401,6 +401,12 @@ export default function ProfilePage() {
                         isEditing={editingSection === "personal"}
                         onValueChange={(v) => setEditData({ ...editData, visaStatus: v })}
                     />
+                    <InfoRow
+                        title="Other Visa Status"
+                        value={editingSection === "personal" ? editData.otherVisaType : data.otherVisaType}
+                        isEditing={editingSection === "personal"}
+                        onValueChange={(v) => setEditData({ ...editData, otherVisaType: v })}
+                    />
                 </Card>
 
                 {/* Educations */}
