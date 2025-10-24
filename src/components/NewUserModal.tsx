@@ -42,6 +42,7 @@ type FormData = {
   mastersGradMonthYear: string;
   mastersGPA: string;
   visaStatus: string;
+  otherVisaType?: string;
   visaExpiry: string;
   address: string;
   preferredRoles: string;
@@ -82,6 +83,7 @@ const initialData: FormData = {
   mastersGradMonthYear: "",
   mastersGPA: "",
   visaStatus: "",
+  otherVisaType: "", 
   visaExpiry: "",
   address: "",
   preferredRoles: "",
@@ -480,6 +482,11 @@ useEffect(() => {
       if (!data.mastersUniDegree.trim()) e.mastersUniDegree = "Required";
       if (!data.mastersGradMonthYear) e.mastersGradMonthYear = "Required";
       if (!data.visaStatus) e.visaStatus = "Required";
+      if (!data.visaStatus) e.visaStatus = "Required";
+if (data.visaStatus === "Other" && !data?.otherVisaType?.trim()) {
+  e.otherVisaType = "Please specify your visa type";
+}
+
       if (!data.address.trim()) e.address = "Required";
     } else if (index === 1) {
       if (!data.preferredRoles.trim()) e.preferredRoles = "Required";
@@ -522,7 +529,7 @@ useEffect(() => {
 
   const next = () => {
     // TEMP: Bypass validation for testing
-    // if (!validateStep(stepIndex)) return;
+    if (!validateStep(stepIndex)) return;
     // console.log('Next button clicked');
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   };
@@ -711,17 +718,34 @@ const handleSubmit = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200">Immigration & Address</h3>
               <div className="space-y-6">
                 <div>
-                  <FieldLabel>Current Visa Status</FieldLabel>
-                  <Select value={data.visaStatus} onChange={(e) => set({ visaStatus: e.target.value })}>
-                    <option value="">Select status…</option>
-                    {VISA_OPTIONS.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </Select>
-                  <ErrorText>{errors.visaStatus}</ErrorText>
-                </div>
+  <FieldLabel>Visa Status</FieldLabel>
+  <Select
+    value={data.visaStatus}
+    onChange={(e) => set({ visaStatus: e.target.value, otherVisaType: "" })}
+  >
+    <option value="">Select visa status</option>
+    {VISA_OPTIONS.map((v) => (
+      <option key={v} value={v}>
+        {v}
+      </option>
+    ))}
+  </Select>
+  <ErrorText>{errors.visaStatus}</ErrorText>
+
+  {/* 👇 Conditionally show text input when "Other" is selected */}
+  {data.visaStatus === "Other" && (
+    <div className="mt-4">
+      <FieldLabel>Specify Visa Type</FieldLabel>
+      <TextInput
+        placeholder="Enter your visa type"
+        value={data.otherVisaType}
+        onChange={(e) => set({ otherVisaType: e.target.value })}
+      />
+      <ErrorText>{errors.otherVisaType}</ErrorText>
+    </div>
+  )}
+</div>
+
                 <div>
                   <FieldLabel>Complete Current Address (Street, City, State, ZIP Code)</FieldLabel>
                   <TextArea rows={3} placeholder="Complete address (Street, City, State, ZIP)" value={data.address} onChange={(e) => set({ address: e.target.value })} />
