@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { Calendar } from 'lucide-react';
 import { Job } from '../types';
 import { getTimeAgo } from '../utils/getTimeAgo';
@@ -26,7 +26,6 @@ const JobCard: React.FC<JobCardProps> = ({
     setShowJobModal(true);
     setSelectedJob(job);
   };
-
   const getCompanyDomain = (companyName: string) => {
     return companyName.replace(/\s+/g, '').toLowerCase();
   };
@@ -43,14 +42,19 @@ const JobCard: React.FC<JobCardProps> = ({
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-gray-900 ">{job.jobTitle}</h4>
           <div className="flex items-center text-sm text-gray-600 mt-1">
-<img 
-  src={`https://www.google.com/s2/favicons?domain=${getCompanyDomain(job.companyName)}.com&sz=64`} 
-  alt="Company Logo" 
-  className="w-[20px] h-[20px] m-2"
-  onError={(e) => {
-    e.currentTarget.style.display = 'none';
-  }}
-/>
+  {job.companyName && (
+              <img
+                src={`https://logo.clearbit.com/${getCompanyDomain(job.companyName)}.com`}
+                alt="Company Logo"
+                className="w-[25px] h-[25px] m-2"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+                onLoad={(e) => {
+                  e.currentTarget.style.display = 'block';
+                }}
+              />
+            )}
             <span className="">{job.companyName}</span> <hr />
           </div>
         </div>

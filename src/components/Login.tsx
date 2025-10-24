@@ -562,7 +562,8 @@ export default function Login() {
     <style>{`
       /* Reset and force consistent styling */
       #google-button-wrapper {
-        display: block !important;
+        display: flex !important;
+        justify-content: center !important;
         width: 100% !important;
         height: 42px !important;
         border-radius: 8px !important;
@@ -622,7 +623,7 @@ export default function Login() {
         font-family: inherit !important;
         box-sizing: border-box !important;
         display: flex !important;
-        align-items: center !important;
+        align-items: flex-start !important;
         justify-content: center !important;
       }
       
@@ -644,8 +645,8 @@ export default function Login() {
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: flex-start !important; /* Changed to flex-start for left alignment */
-        gap: 12px !important;
+        justify-content: center !important; /* Changed to flex-start for left alignment */
+        gap: 5px !important;
         margin: 0 !important;
         padding: 0 20px !important; /* Add horizontal padding for better spacing */
       }
@@ -657,7 +658,7 @@ export default function Login() {
         font-weight: 500 !important;
         font-size: 14px !important;
         letter-spacing: 0.025em !important;
-        white-space: nowrap !important;
+        white-space: wrap !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       }
       
@@ -712,6 +713,9 @@ export default function Login() {
         background: transparent !important;
         display: none !important;
       }
+        .nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{
+        flex-grow : inherit !important;
+        }
     `}</style>
     <GoogleLogin
       key={`google-login-button-${googleButtonKey}`}
