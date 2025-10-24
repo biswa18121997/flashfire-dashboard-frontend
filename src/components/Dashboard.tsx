@@ -298,7 +298,7 @@ const Dashboard: React.FC = () => {
             onSuccess={() => {
               setShowJobForm(false);
               if (context?.token && context?.userDetails) {
-                FetchAllJobs(context.token, context.userDetails);
+                FetchAllJobs(context?.token, context?.userDetails);
               }
             }}
             setUserJobs={setUserJobs}
