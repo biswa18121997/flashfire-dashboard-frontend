@@ -101,8 +101,8 @@ const Dashboard: React.FC = () => {
                             setTimeout(
                                 () =>
                                     FetchAllJobs(
-                                        context.token!,
-                                        context.userDetails!
+                                        context?.token!,
+                                        context?.userDetails!
                                     ),
                                 100
                             );
