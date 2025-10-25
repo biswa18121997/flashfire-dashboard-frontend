@@ -689,15 +689,16 @@ useEffect(() => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <img
-                                    src={`https://www.google.com/s2/favicons?domain=${getCompanyDomain(
-                                        jobDetails.companyName
-                                    )}.com&sz=64`}
-                                    alt="Company Logo"
-                                    className="w-[40px] h-[40px]"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                    }}
-                                />
+                src={`https://logo.clearbit.com/${getCompanyDomain(jobDetails?.companyName)}.com`}
+                alt="Company Logo"
+                className="w-[35px] h-[35px] m-2"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+                onLoad={(e) => {
+                  e.currentTarget.style.display = 'block';
+                }}
+              />
                                 <p className="text-lg font-semibold text-gray-900">
                                     {jobDetails.companyName}
                                 </p>
@@ -1438,4 +1439,5 @@ useEffect(() => {
         </div>
     );
 }
+
 
