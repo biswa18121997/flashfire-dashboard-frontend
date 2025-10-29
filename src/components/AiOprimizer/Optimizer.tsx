@@ -24,6 +24,8 @@ import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
 import { ResumePreviewMedical } from "./components/ResumePreviewMedical";
 import { useJobsSessionStore } from "../../state_management/JobsSessionStore";
+import { useOperationsStore } from "../../state_management/Operations";
+import SessionManagementPanel from "./components/SessionManagementPanel";
 import "./index.css"; //
 
 // Type definitions remain the same
@@ -212,10 +214,10 @@ function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState<string>("");
     const [token, setToken] = useState<string>("");
-    const [authView, setAuthView] = useState<"login" | "admin" | "resume">(
-        "login"
-    );
+    const [authView, setAuthView] = useState<"login" | "admin" | "resume">("login");
+    const [showSessionModal, setShowSessionModal] = useState(false);
     const { versionV, setVersion } = PreviewStore();
+    const operationsRole = useOperationsStore(state => state.role);
 
     // Get session store for updating job cache
     const { updateJob, refreshJobByMongoId } = useJobsSessionStore();
@@ -275,7 +277,66 @@ function App() {
     const [showParseModal, setShowParseModal] = useState(false);
     const [storeHydrated, setStoreHydrated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
-    
+    const [sessionKey, setSessionKey] = useState<string>("");
+    const [sessionKeyError, setSessionKeyError] = useState<string>("");
+    const [sessionExpiry, setSessionExpiry] = useState<Date | null>(null);
+
+    useEffect(() => {
+        async function fetchSessionKey() {
+            console.log('mai hua start');
+            setSessionKeyError("");
+            const userEmail = localStorage.getItem("userEmail");
+            if (!userEmail) {
+                setSessionKeyError("No user email found");
+                return;
+            }
+console.log('---------------');
+            try {
+                let response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:10000'}/api/getSessionKey`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify( {'email': userEmail} ),
+                });
+                // response=response?.json();
+                console.log('pata nhiu',response)
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data)
+                    if (data?.sessionKey) {
+                        setSessionKey(data?.sessionKey);
+                        // if (data.sessionKey.expiresAt) {
+                            setSessionExpiry(new Date(data?.expiresAt));
+                        // }
+                    } else {
+                        setSessionKeyError("No session key in response");
+                    }
+                } else {
+                    const errorData = await response.json();
+                    // setSessionKey('');
+                    setSessionKeyError(errorData.error || "Failed to fetch session key");
+                }
+            } catch (error) {
+                setSessionKeyError("Error fetching session key");
+                console.log("Error fetching session key:", error);
+            }
+        }
+
+        fetchSessionKey();
+
+        // Set up periodic check for session expiry
+        const checkInterval = setInterval(() => {
+            if (sessionExpiry && new Date() >= sessionExpiry) {
+                setSessionKeyError("Session has expired");
+                setSessionKey("");
+                setSessionExpiry(null);
+            }
+        }, 60000); // Check every minute
+
+        return () => clearInterval(checkInterval);
+    }, []);
+
     // Additional state variables for job details and optimization
     const [companyName, setCompanyName] = useState<string>("");
     const [jobTitle, setJobTitle] = useState<string>("");
@@ -706,7 +767,24 @@ function App() {
     useEffect(() => {
         if (jobId && jobId !== resume_id) {
             console.log("Setting resume ID from URL:", jobId);
-            setResumeId(jobId);
+            // First try to get the actual MongoDB ID for this job
+            const fetchResumeId = async () => {
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || "https://resume-maker-backend-lf5z.onrender.com";
+                    const res = await fetch(`${apiUrl}/api/resume-index/${jobId}`);
+                    const data = await res.json();
+                    if (res.ok && data && data._id) {
+                        setResumeId(data._id);
+                    } else {
+                        // Fallback to using jobId directly
+                        setResumeId(jobId);
+                    }
+                } catch (e) {
+                    console.error("Error fetching resume ID:", e);
+                    setResumeId(jobId);
+                }
+            };
+            fetchResumeId();
         }
     }, [jobId, resume_id, setResumeId]);
 
@@ -738,7 +816,7 @@ function App() {
             console.log("🔄 Fetching job description for jobId:", jobId);
 
             const apiUrl =
-                import.meta.env.VITE_API_BASE_URL || "http://localhost:8086";
+                import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
             const fullUrl = `${apiUrl}/getJobDescription/${jobId}`;
             console.log("🌐 Making request to:", fullUrl);
 
@@ -759,15 +837,14 @@ function App() {
                 Object.fromEntries(response.headers.entries())
             );
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("❌ Response error text:", errorText);
-                throw new Error(
-                    `HTTP error! status: ${response.status}, message: ${errorText}`
-                );
-            }
-
             const data = await response.json();
+            if (!response.ok) {
+                // setSessionKey('');
+                console.log("❌ Response error:", data);
+                // throw new Error(
+                //     `HTTP error! status: ${response.status}, message: ${JSON.stringify(data)}`
+                // );
+            }
             console.log("✅ Job description fetched successfully:", {
                 jobDescription: data.jobDescription?.substring(0, 100) + "...",
                 jobTitle: data.jobTitle,
@@ -1739,6 +1816,8 @@ function App() {
         );
     }
 
+
+
     return (
         <>
             <div className="min-h-screen bg-gray-50">
@@ -1764,47 +1843,82 @@ function App() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center space-x-4">
-                                {/* User Info */}
-                                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
-                                    <span className="text-sm text-gray-600">
-                                        Welcome,
-                                    </span>
-                                    <span className="text-sm font-medium text-gray-900">
-                                        {userRole === "admin"
-                                            ? "Admin"
-                                            : "User"}
-                                    </span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="text-sm text-red-600 hover:text-red-800 transition-colors"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
 
-                                {/* Go Back to Dashboard Button - Only for Admin */}
-                                {userRole === "admin" && (
-                                    <button
-                                        onClick={() => setAuthView("admin")}
-                                        className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
-                                    >
-                                        <svg
-                                            className="h-4 w-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                            <div className="flex items-center space-x-10">
+                                <div className="flex flex-col items-end">
+                                    {/* User Info */}
+                                    <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
+                                        <span className="text-sm text-gray-600">Welcome,</span>
+                                        <span className="text-sm font-medium text-gray-900">{userRole === "admin" ? "Admin" : "User"}</span>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="text-sm text-red-600 hover:text-red-800 transition-colors"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 19l-7-7 7-7"
-                                            />
-                                        </svg>
-                                        Dashboard
-                                    </button>
+                                            Logout
+                                        </button>
+                                    </div>
+                                    {localStorage.getItem('role') == 'user' && 
+                                    <div className="mt-2 relative ">
+                                        <h1 className="text-sm font-medium text-gray-900">Session Key: {sessionKey}</h1>
+                                        {sessionExpiry && (
+                                            <p className="text-xs text-gray-500">
+                                                Expires: {sessionExpiry.toLocaleString()}
+                                            </p>
+                                        )}
+                                        {sessionKeyError && (
+                                            <p className="text-red-500 text-sm mt-1">{sessionKeyError}</p>
+                                        )}
+                                    </div>
+                                    }
+                                </div>
+                                {/* Go Back to Dashboard Button - Only for Admin */}
+                                {userRole === "user" && (
+                                    <>
+                                        <button
+                                            onClick={() => setAuthView("admin")}
+                                            className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
+                                        >
+                                            <svg
+                                                className="h-4 w-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M15 19l-7-7 7-7"
+                                                />
+                                            </svg>
+                                            Dashboard
+                                        </button>
+                                        {userRole === "user" && <button
+                                            onClick={() => setShowSessionModal(true)}
+                                            className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 ml-2"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m9 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Session Management
+                                        </button>}
+                                    </>
                                 )}
+            {/* Session Management Modal */}
+            {showSessionModal && userRole === "user" && (
+                <div className="fixed inset-0 z-50 top-10 flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 relative">
+                        <button
+                            onClick={() => setShowSessionModal(false)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-xl"
+                        >
+                            &times;
+                        </button>
+                        {/* --- Session Management UI from AdminDashboard --- */}
+                        <SessionManagementPanel token={token} />
+                    </div>
+                </div>
+            )}
 
                                 {/* View Changes Toggle - Only show when optimized data exists and user is on optimized view */}
                                 {optimizedData &&

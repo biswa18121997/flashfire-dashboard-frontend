@@ -28,12 +28,7 @@ const Login: React.FC<{
         setError("");
         setLoading(true);
 
-        const API_BASE =
-            import.meta.env.VITE_API_URL ||
-            (import.meta.env.DEV
-                ? import.meta.env.VITE_DEV_API_URL || "http://localhost:8001"
-                : "");
-
+        const API_BASE =import.meta.env.VITE_API_URL ;
         try {
             // First check if user is admin by trying login without session key
             const adminCheckData = { username, password };
@@ -94,10 +89,10 @@ const Login: React.FC<{
         setLoading(true);
 
         const API_BASE =
-            import.meta.env.VITE_API_URL ||
-            (import.meta.env.DEV
-                ? import.meta.env.VITE_DEV_API_URL || "http://localhost:8001"
-                : "");
+            import.meta.env.VITE_API_URL ;
+            // (import.meta.env.DEV
+            //     ? import.meta.env.VITE_DEV_API_URL || "http://localhost:8001"
+            //     : "");
 
         try {
             const loginData = { username, password, sessionKey };
