@@ -24,6 +24,7 @@ import { PreviewStore } from "./store/PreviewStore";
 import { Publications } from "./components/Publications";
 import { ResumePreviewMedical } from "./components/ResumePreviewMedical";
 import { useJobsSessionStore } from "../../state_management/JobsSessionStore";
+import SessionManagementPanel from "./components/SessionManagementPanel";
 import "./index.css"; //
 
 // Type definitions remain the same
@@ -204,7 +205,7 @@ function App() {
     const [searchParams] = useSearchParams();
     const { jobId } = useParams<{ jobId: string }>();
     const startWithEditor = searchParams.get("view") === "editor";
-    
+    const [showSessionModal, setShowSessionModal] = useState(false);
     // Check if we're in the optimize route to show print buttons
     const isOptimizeRoute = window.location.pathname.includes('/optimize/');
     const [sessionKey, setSessionKey] = useState<string>("");
@@ -296,7 +297,7 @@ function App() {
             }
 console.log('---------------');
             try {
-                let response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:10000'}/api/getSessionKey`, {
+                let response = await fetch(`${import.meta.env.VITE_API_URL || 'https://gemini-resume-latest.onrender.com'}/api/getSessionKey`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1842,19 +1843,19 @@ console.log('---------------');
                                         Logout
                                     </button>
                                 </div>
-                                {localStorage.getItem('role') == 'user' && 
-                                    <div className="mt-2 relative ">
-                                        <h1 className="text-sm font-medium text-gray-900">Session Key: {sessionKey}</h1>
-                                        {sessionExpiry && (
-                                            <p className="text-xs text-gray-500">
-                                                Expires: {sessionExpiry.toLocaleString()}
-                                            </p>
-                                        )}
-                                        {sessionKeyError && (
-                                            <p className="text-red-500 text-sm mt-1">{sessionKeyError}</p>
-                                        )}
-                                    </div>
-                                    }
+                                {localStorage.getItem('role') === 'user' && (
+    <div className="mt-2 relative">
+        <h1 className="text-sm font-medium text-gray-900">Session Key: {sessionKey}</h1>
+        {sessionExpiry && (
+            <p className="text-xs text-gray-500">
+                Expires: {sessionExpiry.toLocaleString()}
+            </p>
+        )}
+        {sessionKeyError && (
+            <p className="text-red-500 text-sm mt-1">{sessionKeyError}</p>
+        )}
+    </div>
+)}
 
 
                                 {/* Go Back to Dashboard Button - Only for Admin */}
@@ -1879,7 +1880,32 @@ console.log('---------------');
                                         Dashboard
                                     </button>
                                 )}
-
+                                 {userRole === "user" && <button
+                                            onClick={() => setShowSessionModal(true)}
+                                            className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 ml-2"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m9 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Session Management
+                                        </button>}
+                                    
+                                
+            {/* Session Management Modal */}
+            {showSessionModal && userRole === "user" && (
+                <div className="fixed inset-0 z-50 top-10 flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 relative">
+                        <button
+                            onClick={() => setShowSessionModal(false)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-xl"
+                        >
+                            &times;
+                        </button>
+                        {/* --- Session Management UI from AdminDashboard --- */}
+                        <SessionManagementPanel token={token} />
+                    </div>
+                </div>
+            )}
                                 {/* View Changes Toggle - Only show when optimized data exists and user is on optimized view */}
                                 {optimizedData &&
                                     currentResumeView === "optimized" && (
